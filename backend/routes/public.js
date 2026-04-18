@@ -32,6 +32,13 @@ router.get('/:slug', async (req, res) => {
       businessName:        settings.business_name || tenant.name,
       businessDescription: settings.business_description || '',
       slug:                tenant.slug,
+      theme: {
+        primary:   settings.theme_primary   || '#EA580C',
+        secondary: settings.theme_secondary || '#9A3412',
+        accent:    settings.theme_accent    || '#FED7AA',
+        bg:        settings.theme_bg        || '#FFF7ED',
+        logo:      settings.theme_logo      || '',
+      },
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

@@ -130,16 +130,27 @@ export default function BookingPage() {
     </div>
   );
 
+  const theme = {
+    primary:   business.theme?.primary   || '#EA580C',
+    secondary: business.theme?.secondary || '#9A3412',
+    accent:    business.theme?.accent    || '#FED7AA',
+    bg:        business.theme?.bg        || '#FFF7ED',
+    logo:      business.theme?.logo      || '',
+  };
+
   const today = todayISO();
   const firstDay = new Date(calDate.year, calDate.month, 1).getDay();
   const daysInMonth = new Date(calDate.year, calDate.month + 1, 0).getDate();
   const offset = (firstDay + 6) % 7;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#FFF7ED' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: theme.bg }}>
       {/* Header */}
-      <header className="py-8 px-4 text-center" style={{ background: '#9A3412' }}>
+      <header className="py-8 px-4 text-center" style={{ background: theme.secondary }}>
         <div className="max-w-lg mx-auto">
+          {theme.logo && (
+            <img src={theme.logo} alt="logo" className="w-16 h-16 rounded-full object-cover mx-auto mb-4 border-2 border-white/30" />
+          )}
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 mb-4">
             <CalendarDays size={14} className="text-white/80" />
             <span className="text-white/80 text-xs font-medium tracking-wide uppercase">Reservas online</span>
@@ -153,7 +164,7 @@ export default function BookingPage() {
 
       {/* Progress bar */}
       {step !== 'success' && (
-        <div className="sticky top-0 z-10 border-b" style={{ background: '#fff', borderColor: '#FED7AA' }}>
+        <div className="sticky top-0 z-10 border-b" style={{ background: '#fff', borderColor: theme.accent }}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
             {[
               { id: 'date', label: 'Fecha',   Icon: CalendarDays },
@@ -170,7 +181,7 @@ export default function BookingPage() {
                   <div className="flex items-center gap-1.5">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                       done ? 'text-white' : active ? 'text-white' : 'text-stone-400 bg-stone-100'
-                    }`} style={done || active ? { background: '#EA580C' } : {}}>
+                    }`} style={done || active ? { background: theme.primary } : {}}>
                       {done ? '✓' : <Icon size={13} />}
                     </div>
                     <span className={`text-xs font-medium hidden sm:block ${active ? 'text-stone-800' : done ? 'text-stone-500' : 'text-stone-400'}`}>
@@ -178,7 +189,7 @@ export default function BookingPage() {
                     </span>
                   </div>
                   {i < arr.length - 1 && (
-                    <div className="flex-1 h-px mx-1" style={{ background: myIdx < idx ? '#EA580C' : '#FED7AA' }} />
+                    <div className="flex-1 h-px mx-1" style={{ background: myIdx < idx ? theme.primary : theme.accent }} />
                   )}
                 </div>
               );
@@ -192,18 +203,18 @@ export default function BookingPage() {
 
         {/* ── Step 1: Date ── */}
         {step === 'date' && (
-          <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: '#FED7AA' }}>
-            <h2 className="text-lg font-bold mb-4" style={{ color: '#9A3412' }}>¿Qué día te queda bien?</h2>
+          <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: theme.accent }}>
+            <h2 className="text-lg font-bold mb-4" style={{ color: theme.secondary }}>¿Qué día te queda bien?</h2>
 
             <div className="flex items-center justify-between mb-4">
               <button onClick={() => shiftMonth(-1)} className="p-2 rounded-lg hover:bg-stone-100 transition-colors">
-                <ChevronLeft size={18} style={{ color: '#9A3412' }} />
+                <ChevronLeft size={18} style={{ color: theme.secondary }} />
               </button>
               <span className="font-semibold text-stone-800">
                 {MONTHS_ES[calDate.month]} {calDate.year}
               </span>
               <button onClick={() => shiftMonth(1)} className="p-2 rounded-lg hover:bg-stone-100 transition-colors">
-                <ChevronRight size={18} style={{ color: '#9A3412' }} />
+                <ChevronRight size={18} style={{ color: theme.secondary }} />
               </button>
             </div>
 
@@ -229,11 +240,11 @@ export default function BookingPage() {
                       'hover:text-white'
                     }`}
                     style={
-                      isSelected ? { background: '#EA580C' } :
-                      isToday ? { ringColor: '#EA580C', color: '#EA580C' } :
-                      !isPast ? {} : {}
+                      isSelected ? { background: theme.primary } :
+                      isToday ? { color: theme.primary } :
+                      {}
                     }
-                    onMouseEnter={e => { if (!isPast && !isSelected) e.currentTarget.style.background = '#FED7AA'; }}
+                    onMouseEnter={e => { if (!isPast && !isSelected) e.currentTarget.style.background = theme.accent; }}
                     onMouseLeave={e => { if (!isPast && !isSelected) e.currentTarget.style.background = ''; }}
                   >
                     {day}
@@ -247,22 +258,22 @@ export default function BookingPage() {
         {/* ── Step 2: Time ── */}
         {step === 'time' && (
           <div className="space-y-4">
-            <button onClick={() => setStep('date')} className="flex items-center gap-1 text-sm font-medium hover:underline" style={{ color: '#EA580C' }}>
+            <button onClick={() => setStep('date')} className="flex items-center gap-1 text-sm font-medium hover:underline" style={{ color: theme.primary }}>
               <ChevronLeft size={16} /> Cambiar fecha
             </button>
-            <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: '#FED7AA' }}>
-              <h2 className="text-lg font-bold mb-1" style={{ color: '#9A3412' }}>Elegí tu horario</h2>
+            <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: theme.accent }}>
+              <h2 className="text-lg font-bold mb-1" style={{ color: theme.secondary }}>Elegí tu horario</h2>
               <p className="text-stone-500 text-sm mb-4 capitalize">{formatDateLong(selectedDate)}</p>
 
               {loadingSlots ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 size={24} className="animate-spin" style={{ color: '#EA580C' }} />
+                  <Loader2 size={24} className="animate-spin" style={{ color: theme.primary }} />
                 </div>
               ) : slots.length === 0 ? (
                 <div className="text-center py-8">
-                  <Clock size={36} className="mx-auto mb-3 opacity-30" style={{ color: '#9A3412' }} />
+                  <Clock size={36} className="mx-auto mb-3 opacity-30" style={{ color: theme.secondary }} />
                   <p className="text-stone-500 font-medium">No hay horarios disponibles para este día.</p>
-                  <button onClick={() => setStep('date')} className="mt-4 text-sm font-semibold underline" style={{ color: '#EA580C' }}>
+                  <button onClick={() => setStep('date')} className="mt-4 text-sm font-semibold underline" style={{ color: theme.primary }}>
                     Elegir otro día
                   </button>
                 </div>
@@ -286,21 +297,21 @@ export default function BookingPage() {
         {/* ── Step 3: Form ── */}
         {step === 'form' && (
           <div className="space-y-4">
-            <button onClick={() => setStep('time')} className="flex items-center gap-1 text-sm font-medium hover:underline" style={{ color: '#EA580C' }}>
+            <button onClick={() => setStep('time')} className="flex items-center gap-1 text-sm font-medium hover:underline" style={{ color: theme.primary }}>
               <ChevronLeft size={16} /> Cambiar horario
             </button>
 
             {/* Summary */}
-            <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: '#FED7AA' }}>
-              <CalendarDays size={20} style={{ color: '#9A3412' }} />
+            <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: theme.accent }}>
+              <CalendarDays size={20} style={{ color: theme.secondary }} />
               <div>
-                <p className="font-bold text-sm capitalize" style={{ color: '#9A3412' }}>{formatDateLong(selectedDate)}</p>
+                <p className="font-bold text-sm capitalize" style={{ color: theme.secondary }}>{formatDateLong(selectedDate)}</p>
                 <p className="text-xs text-stone-600">a las <strong>{selectedTime}</strong></p>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: '#FED7AA' }}>
-              <h2 className="text-lg font-bold mb-4" style={{ color: '#9A3412' }}>Tus datos</h2>
+            <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: theme.accent }}>
+              <h2 className="text-lg font-bold mb-4" style={{ color: theme.secondary }}>Tus datos</h2>
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">
@@ -358,29 +369,29 @@ export default function BookingPage() {
         {/* ── Success ── */}
         {step === 'success' && bookedApt && (
           <div className="flex flex-col items-center text-center py-8">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5" style={{ background: '#FED7AA' }}>
-              <CheckCircle size={40} style={{ color: '#EA580C' }} />
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5" style={{ background: theme.accent }}>
+              <CheckCircle size={40} style={{ color: theme.primary }} />
             </div>
-            <h2 className="text-2xl font-bold mb-2" style={{ color: '#9A3412' }}>¡Turno confirmado!</h2>
+            <h2 className="text-2xl font-bold mb-2" style={{ color: theme.secondary }}>¡Turno confirmado!</h2>
             <p className="text-stone-500 mb-6">Te enviamos la confirmación por WhatsApp.</p>
 
-            <div className="w-full rounded-2xl p-5 text-left space-y-3 mb-6" style={{ background: '#FED7AA' }}>
+            <div className="w-full rounded-2xl p-5 text-left space-y-3 mb-6" style={{ background: theme.accent }}>
               <div className="flex items-center gap-3">
-                <User size={18} style={{ color: '#9A3412' }} />
+                <User size={18} style={{ color: theme.secondary }} />
                 <div>
                   <p className="text-xs text-stone-500">Nombre</p>
                   <p className="font-semibold" style={{ color: '#1C1917' }}>{bookedApt.name}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <CalendarDays size={18} style={{ color: '#9A3412' }} />
+                <CalendarDays size={18} style={{ color: theme.secondary }} />
                 <div>
                   <p className="text-xs text-stone-500">Fecha</p>
                   <p className="font-semibold capitalize" style={{ color: '#1C1917' }}>{formatDateLong(bookedApt.date)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Clock size={18} style={{ color: '#9A3412' }} />
+                <Clock size={18} style={{ color: theme.secondary }} />
                 <div>
                   <p className="text-xs text-stone-500">Hora</p>
                   <p className="font-semibold" style={{ color: '#1C1917' }}>{bookedApt.time}</p>

@@ -1,13 +1,15 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Navbar       from './components/Navbar';
-import Login        from './pages/Login';
-import Register     from './pages/Register';
-import BookingPage  from './pages/BookingPage';
-import Dashboard    from './pages/Dashboard';
-import Appointments from './pages/Appointments';
-import Schedule     from './pages/Schedule';
-import Settings     from './pages/Settings';
+import Navbar            from './components/Navbar';
+import Login             from './pages/Login';
+import Register          from './pages/Register';
+import BookingPage       from './pages/BookingPage';
+import Dashboard         from './pages/Dashboard';
+import Appointments      from './pages/Appointments';
+import Schedule          from './pages/Schedule';
+import Settings          from './pages/Settings';
+import SuperAdminLogin   from './pages/SuperAdminLogin';
+import SuperAdmin        from './pages/SuperAdmin';
 
 function ProtectedLayout() {
   const { user, loading } = useAuth();
@@ -45,10 +47,12 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login"      element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/register"   element={<PublicRoute><Register /></PublicRoute>} />
-          <Route path="/book/:slug" element={<BookingPage />} />
-          <Route path="/*"          element={<ProtectedLayout />} />
+          <Route path="/login"        element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register"     element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/book/:slug"   element={<BookingPage />} />
+          <Route path="/admin/login"  element={<SuperAdminLogin />} />
+          <Route path="/admin"        element={<SuperAdmin />} />
+          <Route path="/*"            element={<ProtectedLayout />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

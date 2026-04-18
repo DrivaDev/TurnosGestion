@@ -15,6 +15,11 @@ const DEFAULT_SETTINGS = {
   reminder_message:     '¡Hola {nombre}! 🔔 Te recordamos que tenés un turno hoy a las *{hora}*. ¡No te olvides!',
   business_name: 'Mi Local',
   business_description: '',
+  theme_primary:   '#EA580C',
+  theme_secondary: '#9A3412',
+  theme_accent:    '#FED7AA',
+  theme_bg:        '#FFF7ED',
+  theme_logo:      '',
 };
 
 async function getConfig(tenantId) {
