@@ -27,7 +27,7 @@ export const api = {
 
   // Appointments
   getAppointments:    (p = {}) => req('GET', `/appointments?${new URLSearchParams(p)}`),
-  getAvailableSlots:  (date, excludeId) => req('GET', `/appointments/available-slots?date=${date}${excludeId ? `&excludeId=${excludeId}` : ''}`),
+  getAvailableSlots:  (date, excludeId, extra = '') => req('GET', `/appointments/available-slots?date=${date}${excludeId ? `&excludeId=${excludeId}` : ''}${extra}`),
   createAppointment:  (data)  => req('POST',   '/appointments', data),
   updateAppointment:  (id, d) => req('PUT',    `/appointments/${id}`, d),
   deleteAppointment:  (id)    => req('DELETE', `/appointments/${id}`),

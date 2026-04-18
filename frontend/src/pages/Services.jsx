@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, Save, X, Loader2, Clock, DollarSign, Scissors } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Loader2, Clock, DollarSign, LayoutGrid } from 'lucide-react';
 import { api } from '../api';
 
 function ServiceModal({ service, onClose, onSave }) {
@@ -199,7 +199,7 @@ export default function Services() {
         <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-orange-500" /></div>
       ) : services.length === 0 ? (
         <div className="text-center py-20 border-2 border-dashed rounded-2xl border-stone-200">
-          <Scissors size={40} className="mx-auto mb-3 text-stone-300" />
+          <LayoutGrid size={40} className="mx-auto mb-3 text-stone-300" />
           <h3 className="font-semibold text-stone-500 mb-1">Sin servicios aún</h3>
           <p className="text-sm text-stone-400 mb-4">Creá tu primer servicio para que los clientes puedan elegir al reservar.</p>
           <button onClick={() => setModal('new')} className="text-sm font-semibold hover:underline" style={{ color: '#EA580C' }}>
@@ -211,7 +211,7 @@ export default function Services() {
           {services.map(svc => (
             <div key={svc.id} className={`rounded-2xl border p-4 flex items-center gap-4 transition-opacity ${svc.active ? '' : 'opacity-50'}`} style={{ borderColor: '#FED7AA', background: '#FFFBF7' }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FED7AA' }}>
-                <Scissors size={18} style={{ color: '#9A3412' }} />
+                <LayoutGrid size={18} style={{ color: '#9A3412' }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

@@ -119,6 +119,7 @@ export default function Appointments() {
                   <span className="text-blue-700 font-bold text-lg w-14 shrink-0">{apt.time}</span>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900">{apt.name}</p>
+                    {apt.serviceName && <p className="text-xs font-medium text-orange-600">{apt.serviceName}</p>}
                     <p className="text-sm text-gray-500">{apt.phone}</p>
                     {apt.notes && <p className="text-xs text-gray-400 italic mt-0.5">{apt.notes}</p>}
                     <div className="flex items-center gap-2 mt-2">
@@ -179,27 +180,34 @@ export default function Appointments() {
 
 function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
   const [form, setForm] = useState({
-    name:  initial?.name  || '',
-    phone: initial?.phone || '',
-    date:  initial?.date  || defaultDate,
-    time:  initial?.time  || '',
-    notes: initial?.notes || '',
+    name:        initial?.name        || '',
+    phone:       initial?.phone       || '',
+    date:        initial?.date        || defaultDate,
+    time:        initial?.time        || '',
+    notes:       initial?.notes       || '',
+    serviceId:   initial?.serviceId   || '',
     sendWhatsapp: true,
   });
-  const [slots, setSlots] = useState([]);
+  const [services, setServices]       = useState([]);
+  const [slots, setSlots]             = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving]           = useState(false);
+
+  useEffect(() => {
+    api.get('/services').then(s => setServices(s)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!form.date) return;
     setLoadingSlots(true);
-    api.getAvailableSlots(form.date, initial?.id)
+    const serviceParam = form.serviceId ? `&serviceId=${form.serviceId}` : '';
+    api.getAvailableSlots(form.date, initial?.id, serviceParam)
       .then(({ slots }) => {
         setSlots(slots || []);
         if (slots && !slots.includes(form.time)) setForm(f => ({ ...f, time: slots[0] || '' }));
       })
       .finally(() => setLoadingSlots(false));
-  }, [form.date]);
+  }, [form.date, form.serviceId]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -248,6 +256,20 @@ function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
             <input type="date" className="input" value={form.date}
               onChange={e => setForm(f => ({ ...f, date: e.target.value }))} required />
           </div>
+          {services.length > 0 && (
+            <div>
+              <label className="label">Servicio</label>
+              <select className="input" value={form.serviceId}
+                onChange={e => setForm(f => ({ ...f, serviceId: e.target.value, time: '' }))}>
+                <option value="">Sin especificar</option>
+                {services.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.durationMin < 60 ? `${s.durationMin}min` : `${s.durationMin/60}h`})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="label">Horario *</label>
             {loadingSlots ? (

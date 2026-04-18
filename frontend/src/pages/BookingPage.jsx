@@ -4,7 +4,7 @@ import { tenantConfigs } from '../tenantConfigs';
 import DrivaDevBooking from './tenants/DrivaDevBooking';
 import {
   CalendarDays, Clock, User, Phone, CheckCircle,
-  ChevronLeft, ChevronRight, Loader2, MessageSquare, Scissors, DollarSign,
+  ChevronLeft, ChevronRight, Loader2, MessageSquare, LayoutGrid, DollarSign,
 } from 'lucide-react';
 
 const CUSTOM_PAGES = { 'driva-dev': DrivaDevBooking };
@@ -187,7 +187,7 @@ export default function BookingPage() {
     ? ['service','date','time','form']
     : ['date','time','form'];
   const stepLabels = { service: 'Servicio', date: 'Fecha', time: 'Horario', form: 'Datos' };
-  const stepIcons  = { service: Scissors, date: CalendarDays, time: Clock, form: User };
+  const stepIcons  = { service: LayoutGrid, date: CalendarDays, time: Clock, form: User };
 
   const today = todayISO();
   const firstDay   = new Date(calDate.year, calDate.month, 1).getDay();
@@ -262,7 +262,7 @@ export default function BookingPage() {
                   onMouseLeave={e => { e.currentTarget.style.borderColor = theme.accent; e.currentTarget.style.background = ''; }}
                 >
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: theme.accent }}>
-                    <Scissors size={18} style={{ color: theme.secondary }} />
+                    <LayoutGrid size={18} style={{ color: theme.secondary }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-stone-800">{svc.name}</p>
@@ -295,7 +295,7 @@ export default function BookingPage() {
             )}
             {selectedService && (
               <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm" style={{ background: theme.accent }}>
-                <Scissors size={14} style={{ color: theme.secondary }} />
+                <LayoutGrid size={14} style={{ color: theme.secondary }} />
                 <span className="font-semibold" style={{ color: theme.secondary }}>{selectedService.name}</span>
                 <span className="text-stone-500 text-xs">· {formatDuration(selectedService.durationMin)}</span>
               </div>
@@ -380,7 +380,7 @@ export default function BookingPage() {
             <div className="rounded-2xl p-4 space-y-1" style={{ background: theme.accent }}>
               {selectedService && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Scissors size={14} style={{ color: theme.secondary }} />
+                  <LayoutGrid size={14} style={{ color: theme.secondary }} />
                   <span className="font-bold" style={{ color: theme.secondary }}>{selectedService.name}</span>
                   <span className="text-stone-500 text-xs">· {formatDuration(selectedService.durationMin)}</span>
                   {selectedService.price != null && <span className="text-stone-500 text-xs">· ${Number(selectedService.price).toLocaleString('es-AR')}</span>}
@@ -430,7 +430,7 @@ export default function BookingPage() {
             <div className="w-full rounded-2xl p-5 text-left space-y-3 mb-6" style={{ background: theme.accent }}>
               {selectedService && (
                 <div className="flex items-center gap-3">
-                  <Scissors size={18} style={{ color: theme.secondary }} />
+                  <LayoutGrid size={18} style={{ color: theme.secondary }} />
                   <div><p className="text-xs text-stone-500">Servicio</p><p className="font-semibold" style={{ color: '#1C1917' }}>{selectedService.name}</p></div>
                 </div>
               )}

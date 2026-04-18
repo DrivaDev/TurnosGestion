@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const db      = require('../database');
 const { sendConfirmation } = require('../services/whatsapp');
+const { Service, Appointment } = require('../db/models');
 
 function generateSlots(start, end, durationMin) {
   const slots = [];
@@ -33,10 +34,30 @@ router.get('/available-slots', async (req, res) => {
     const dayConfig = schedule[dayKey];
     if (!dayConfig?.enabled) return res.json({ slots: [], reason: 'día no habilitado' });
 
-    const allSlots = generateSlots(dayConfig.start, dayConfig.end, dayConfig.slotDuration);
+    const slotDuration = dayConfig.slotDuration || 30;
+
+    let serviceDuration = slotDuration;
+    if (req.query.serviceId) {
+      const svc = await Service.findOne({ _id: req.query.serviceId, tenantId: tid, active: true });
+      if (svc) serviceDuration = svc.durationMin;
+    }
+
+    const allSlots = generateSlots(dayConfig.start, dayConfig.end, slotDuration);
+    const taken = await Appointment.find({ tenantId: tid, date, status: { $ne: 'cancelado' }, ...(excludeId ? { _id: { $ne: excludeId } } : {}) }).lean();
+    const takenTimes = new Set(taken.map(a => a.time));
+
+    const [eh, em] = dayConfig.end.split(':').map(Number);
     const slots = [];
     for (const t of allSlots) {
-      if (!(await db.isSlotTaken(tid, date, t, excludeId || null))) slots.push(t);
+      const [h, m] = t.split(':').map(Number);
+      const startMin = h * 60 + m;
+      if (startMin + serviceDuration > eh * 60 + em) continue;
+      let ok = true;
+      for (let cur = startMin; cur < startMin + serviceDuration; cur += slotDuration) {
+        const st = `${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`;
+        if (takenTimes.has(st)) { ok = false; break; }
+      }
+      if (ok) slots.push(t);
     }
     res.json({ slots });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -54,13 +75,20 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const tid = req.user.tenantId;
-    const { name, phone, date, time, notes, sendWhatsapp = true } = req.body;
+    const { name, phone, date, time, notes, serviceId, sendWhatsapp = true } = req.body;
     if (!name || !phone || !date || !time)
       return res.status(400).json({ error: 'Faltan campos: name, phone, date, time' });
+
+    let serviceName = null, durationMin = null;
+    if (serviceId) {
+      const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
+      if (svc) { serviceName = svc.name; durationMin = svc.durationMin; }
+    }
+
     if (await db.isSlotTaken(tid, date, time))
       return res.status(409).json({ error: 'El horario ya está ocupado' });
 
-    const apt      = await db.createAppointment(tid, { name, phone, date, time, notes });
+    const apt      = await db.createAppointment(tid, { name, phone, date, time, notes, serviceName, durationMin });
     const whatsapp = sendWhatsapp ? await sendConfirmation(tid, apt) : null;
     res.status(201).json({ appointment: apt, whatsapp });
   } catch (err) { res.status(500).json({ error: err.message }); }
