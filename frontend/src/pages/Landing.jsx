@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CalendarDays, MessageSquare, Clock, Zap, Shield, BarChart2,
@@ -49,8 +50,31 @@ const TESTIMONIALS = [
   { name: 'Consultorio Nutrición', text: 'La gestión de turnos ahora me lleva 5 minutos por día. Antes era un caos de mensajes de WhatsApp.', stars: 5 },
 ];
 
+const JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'TurnosGestion',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  description: 'Sistema de gestión de turnos online para negocios locales. Página de reservas personalizada, confirmaciones y recordatorios automáticos por WhatsApp.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'ARS', description: 'Consultar precio según plan' },
+  author: { '@type': 'Organization', name: 'Driva Dev', url: 'https://drivadev.com' },
+  url: 'https://turnosgestion.vercel.app',
+};
+
 export default function Landing() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'TurnosGestion — Sistema de turnos online para negocios | Driva Dev';
+    // Inject JSON-LD
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id   = 'landing-jsonld';
+    script.text = JSON.stringify(JSON_LD);
+    document.head.appendChild(script);
+    return () => { document.getElementById('landing-jsonld')?.remove(); };
+  }, []);
 
   return (
     <div className="min-h-screen font-sans" style={{ background: '#0A0A0A', color: '#fff' }}>

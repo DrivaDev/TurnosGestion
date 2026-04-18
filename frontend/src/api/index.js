@@ -44,4 +44,10 @@ export const api = {
   getSettings:        ()      => req('GET', '/settings'),
   updateSettings:     (data)  => req('PUT', '/settings', data),
   testWhatsapp:       (phone) => req('POST', '/settings/test-whatsapp', { phone }),
+
+  // Generic
+  get:    (path)        => req('GET',    path),
+  post:   (path, data)  => req('POST',   path, data),
+  put:    (path, data)  => req('PUT',    path, data),
+  delete: (path)        => req('DELETE', path),
 };

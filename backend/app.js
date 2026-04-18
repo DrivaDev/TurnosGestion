@@ -7,6 +7,7 @@ const authRouter         = require('./routes/auth');
 const publicRouter       = require('./routes/public');
 const superadminRouter   = require('./routes/superadmin');
 const appointmentsRouter = require('./routes/appointments');
+const servicesRouter     = require('./routes/services');
 const scheduleRouter     = require('./routes/schedule');
 const settingsRouter     = require('./routes/settings');
 const cronRouter         = require('./routes/cron');
@@ -36,6 +37,7 @@ app.use('/api/admin', superadminMw, superadminRouter);
 
 // Protected
 app.use('/api/appointments', auth, appointmentsRouter);
+app.use('/api/services',    auth, servicesRouter);
 app.use('/api/schedule',     auth, scheduleRouter);
 app.use('/api/settings',     auth, settingsRouter);
 

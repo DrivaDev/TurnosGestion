@@ -8,6 +8,7 @@ import Dashboard         from './pages/Dashboard';
 import Appointments      from './pages/Appointments';
 import Schedule          from './pages/Schedule';
 import Settings          from './pages/Settings';
+import Services          from './pages/Services';
 import SuperAdminLogin   from './pages/SuperAdminLogin';
 import SuperAdmin        from './pages/SuperAdmin';
 import Landing           from './pages/Landing';
@@ -41,6 +42,7 @@ function ProtectedLayout() {
         <Routes>
           <Route path="/dashboard"    element={<Dashboard />} />
           <Route path="/appointments" element={<Appointments />} />
+          <Route path="/services"     element={<Services />} />
           <Route path="/schedule"     element={<Schedule />} />
           <Route path="/settings"     element={<Settings />} />
           <Route path="*"             element={<Navigate to="/dashboard" replace />} />

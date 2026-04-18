@@ -79,8 +79,8 @@ async function getAppointment(tenantId, id) {
   return Appointment.findOne({ _id: id, tenantId }).lean({ virtuals: true });
 }
 
-async function createAppointment(tenantId, { name, phone, date, time, notes, source = 'admin' }) {
-  const apt = await Appointment.create({ tenantId, name, phone, date, time, notes, source });
+async function createAppointment(tenantId, { name, phone, date, time, notes, serviceName, durationMin, source = 'admin' }) {
+  const apt = await Appointment.create({ tenantId, name, phone, date, time, notes, serviceName, durationMin, source });
   return apt.toJSON();
 }
 

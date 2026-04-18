@@ -1,6 +1,6 @@
 const express = require('express');
 const router  = express.Router();
-const { Tenant } = require('../db/models');
+const { Tenant, Service, Appointment } = require('../db/models');
 const db = require('../database');
 const { sendConfirmation } = require('../services/whatsapp');
 
@@ -36,10 +36,13 @@ router.get('/:slug', async (req, res) => {
     const tid = tenant._id;
     const settings = await db.getAllSettings(tid);
 
+    const services = await Service.find({ tenantId: tenant._id, active: true }).sort({ createdAt: 1 }).lean({ virtuals: true });
+
     res.json({
       businessName:        settings.business_name || tenant.name,
       businessDescription: settings.business_description || '',
       slug:                tenant.slug,
+      services,
       theme: {
         primary:   settings.theme_primary   || '#EA580C',
         secondary: settings.theme_secondary || '#9A3412',
@@ -70,11 +73,45 @@ router.get('/:slug/slots', async (req, res) => {
     const dayConfig = schedule[dayKey];
     if (!dayConfig?.enabled) return res.json({ slots: [], reason: 'día no habilitado' });
 
-    const allSlots = generateSlots(dayConfig.start, dayConfig.end, dayConfig.slotDuration);
+    const slotDuration = dayConfig.slotDuration || 30;
+
+    // If a service is specified, use its duration; otherwise use the slot interval
+    let serviceDuration = slotDuration;
+    const { serviceId } = req.query;
+    if (serviceId) {
+      const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
+      if (svc) serviceDuration = svc.durationMin;
+    }
+
+    // All possible start times (every slotDuration minutes)
+    const allSlots = generateSlots(dayConfig.start, dayConfig.end, slotDuration);
+
+    // Get all taken appointments for that day to check consecutive slot availability
+    const taken = await Appointment.find({
+      tenantId: tid, date, status: { $ne: 'cancelado' },
+    }).lean();
+    const takenTimes = new Set(taken.map(a => a.time));
+
+    // For each slot, check if all required consecutive time blocks are free
     const slots = [];
     for (const t of allSlots) {
-      if (!(await db.isSlotTaken(tid, date, t))) slots.push(t);
+      const [h, m] = t.split(':').map(Number);
+      const startMin = h * 60 + m;
+      const endMin   = startMin + serviceDuration;
+
+      // Must fit within the working day
+      const [eh, em] = dayConfig.end.split(':').map(Number);
+      if (endMin > eh * 60 + em) continue;
+
+      // All slot intervals within the service duration must be free
+      let available = true;
+      for (let cur = startMin; cur < endMin; cur += slotDuration) {
+        const slotTime = `${String(Math.floor(cur / 60)).padStart(2,'0')}:${String(cur % 60).padStart(2,'0')}`;
+        if (takenTimes.has(slotTime)) { available = false; break; }
+      }
+      if (available) slots.push(t);
     }
+
     res.json({ slots });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -87,19 +124,38 @@ router.post('/:slug/book', async (req, res) => {
     if (!check.ok) return res.status(check.status).json({ error: check.error });
 
     const tid = tenant._id;
-    const { name, phone, date, time, notes } = req.body;
+    const { name, phone, date, time, notes, serviceId } = req.body;
     if (!name || !phone || !date || !time)
       return res.status(400).json({ error: 'Faltan campos requeridos' });
 
-    // Validate phone format
     const cleanPhone = phone.replace(/\s/g, '');
     if (!/^\+?\d{8,15}$/.test(cleanPhone))
       return res.status(400).json({ error: 'Formato de teléfono inválido. Incluí el código de país. Ej: +5491122334455' });
 
-    if (await db.isSlotTaken(tid, date, time))
-      return res.status(409).json({ error: 'Este horario ya fue reservado. Por favor elegí otro.' });
+    // Resolve service
+    let serviceName = null, durationMin = null;
+    if (serviceId) {
+      const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
+      if (svc) { serviceName = svc.name; durationMin = svc.durationMin; }
+    }
 
-    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, date, time, notes, source: 'web' });
+    // Check all required slots are free
+    const settings  = await db.getAllSettings(tid);
+    const schedule  = JSON.parse(settings.schedule || '{}');
+    const dayKey    = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][new Date(`${date}T12:00:00`).getDay()];
+    const slotDuration = schedule[dayKey]?.slotDuration || 30;
+    const blocksNeeded = durationMin ? Math.ceil(durationMin / slotDuration) : 1;
+
+    const [h, m] = time.split(':').map(Number);
+    const startMin = h * 60 + m;
+    for (let i = 0; i < blocksNeeded; i++) {
+      const blockMin  = startMin + i * slotDuration;
+      const blockTime = `${String(Math.floor(blockMin / 60)).padStart(2,'0')}:${String(blockMin % 60).padStart(2,'0')}`;
+      if (await db.isSlotTaken(tid, date, blockTime))
+        return res.status(409).json({ error: 'Este horario ya fue reservado. Por favor elegí otro.' });
+    }
+
+    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, date, time, notes, serviceName, durationMin, source: 'web' });
     const whatsapp = await sendConfirmation(tid, apt);
 
     res.status(201).json({

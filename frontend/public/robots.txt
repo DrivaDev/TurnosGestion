@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/login
+Disallow: /dashboard
+Disallow: /appointments
+Disallow: /services
+Disallow: /schedule
+Disallow: /settings
+
+Sitemap: https://turnosgestion.vercel.app/sitemap.xml

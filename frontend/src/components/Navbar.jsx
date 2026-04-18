@@ -1,12 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { CalendarDays, LayoutDashboard, Clock, Settings, LogOut } from 'lucide-react';
+import { CalendarDays, LayoutDashboard, Clock, Settings, LogOut, Scissors } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const links = [
-  { to: '/dashboard',    label: 'Inicio',   Icon: LayoutDashboard },
-  { to: '/appointments', label: 'Turnos',   Icon: CalendarDays },
-  { to: '/schedule',     label: 'Horarios', Icon: Clock },
-  { to: '/settings',     label: 'Ajustes',  Icon: Settings },
+  { to: '/dashboard',    label: 'Inicio',    Icon: LayoutDashboard },
+  { to: '/appointments', label: 'Turnos',    Icon: CalendarDays },
+  { to: '/services',     label: 'Servicios', Icon: Scissors },
+  { to: '/schedule',     label: 'Horarios',  Icon: Clock },
+  { to: '/settings',     label: 'Ajustes',   Icon: Settings },
 ];
 
 export default function Navbar() {
