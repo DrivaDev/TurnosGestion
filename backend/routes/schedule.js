@@ -1,16 +1,12 @@
 const express = require('express');
-const router = express.Router();
-const db = require('../database');
+const router  = express.Router();
+const db      = require('../database');
 
-// GET /api/schedule
 router.get('/', async (req, res) => {
-  try {
-    const raw = await db.getSetting('schedule') || '{}';
-    res.json(JSON.parse(raw));
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  try { res.json(JSON.parse(await db.getSetting(req.user.tenantId, 'schedule') || '{}')); }
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// PUT /api/schedule
 router.put('/', async (req, res) => {
   try {
     const schedule = req.body;
@@ -23,32 +19,29 @@ router.put('/', async (req, res) => {
       if (d.enabled && (!d.start || !d.end || !d.slotDuration))
         return res.status(400).json({ error: `Faltan campos en ${day}` });
     }
-    await db.setSetting('schedule', JSON.stringify(schedule));
+    await db.updateSettings(req.user.tenantId, { schedule: JSON.stringify(schedule) });
     res.json({ ok: true, schedule });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET /api/schedule/blocked-days
 router.get('/blocked-days', async (req, res) => {
-  try { res.json(await db.getBlockedDays()); }
+  try { res.json(await db.getBlockedDays(req.user.tenantId)); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /api/schedule/blocked-days
 router.post('/blocked-days', async (req, res) => {
   try {
     const { date } = req.body;
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))
-      return res.status(400).json({ error: 'Formato de fecha inválido. Usar YYYY-MM-DD' });
-    await db.addBlockedDay(date);
+      return res.status(400).json({ error: 'Formato inválido. Usar YYYY-MM-DD' });
+    await db.addBlockedDay(req.user.tenantId, date);
     res.status(201).json({ ok: true, date });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// DELETE /api/schedule/blocked-days/:date
 router.delete('/blocked-days/:date', async (req, res) => {
   try {
-    await db.removeBlockedDay(req.params.date);
+    await db.removeBlockedDay(req.user.tenantId, req.params.date);
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

@@ -1,21 +1,19 @@
 const express = require('express');
-const router = express.Router();
-const db = require('../database');
+const router  = express.Router();
+const db      = require('../database');
 const { sendTest } = require('../services/whatsapp');
 
 const SENSITIVE = ['twilio_auth_token'];
 
-// GET /api/settings
 router.get('/', async (req, res) => {
   try {
-    const all = await db.getAllSettings();
+    const all = await db.getAllSettings(req.user.tenantId);
     for (const key of SENSITIVE) { if (all[key]) all[key] = '***masked***'; }
     delete all.schedule;
     res.json(all);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// PUT /api/settings
 router.put('/', async (req, res) => {
   try {
     const allowed = [
@@ -32,25 +30,19 @@ router.put('/', async (req, res) => {
     if (updates.reminder_minutes !== undefined) {
       const mins = Number(updates.reminder_minutes);
       if (isNaN(mins) || mins < 1)
-        return res.status(400).json({ error: 'reminder_minutes debe ser un número mayor a 0' });
+        return res.status(400).json({ error: 'reminder_minutes debe ser mayor a 0' });
       updates.reminder_minutes = String(mins);
     }
-    // Store Twilio creds as env-like values in DB so serverless can read them
-    if (updates.twilio_account_sid) process.env.TWILIO_ACCOUNT_SID = updates.twilio_account_sid;
-    if (updates.twilio_auth_token)  process.env.TWILIO_AUTH_TOKEN  = updates.twilio_auth_token;
-    if (updates.twilio_whatsapp_from) process.env.TWILIO_WHATSAPP_FROM = updates.twilio_whatsapp_from;
-
-    await db.updateSettings(updates);
+    await db.updateSettings(req.user.tenantId, updates);
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /api/settings/test-whatsapp
 router.post('/test-whatsapp', async (req, res) => {
   try {
     const { phone } = req.body;
     if (!phone) return res.status(400).json({ error: 'Falta el campo phone' });
-    res.json(await sendTest(phone));
+    res.json(await sendTest(req.user.tenantId, phone));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
