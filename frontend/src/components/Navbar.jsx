@@ -13,26 +13,32 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  function handleLogout() {
-    logout();
-    navigate('/login');
-  }
+  function handleLogout() { logout(); navigate('/login'); }
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+    <header className="sticky top-0 z-10 shadow-sm border-b" style={{ background: '#9A3412', borderColor: '#7c2d12' }}>
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Logo */}
         <div className="flex items-center gap-2">
-          <CalendarDays className="text-blue-600" size={22} />
-          <span className="font-bold text-gray-900 text-lg">{user?.businessName || 'Gestor de Turnos'}</span>
+          <CalendarDays className="text-white" size={22} />
+          <div>
+            <span className="font-bold text-white text-lg leading-none">
+              {user?.businessName || 'Gestor de Turnos'}
+            </span>
+          </div>
         </div>
+
+        {/* Nav links */}
         <nav className="flex items-center gap-1">
           {links.map(({ to, label, Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  isActive
+                    ? 'text-white bg-white/20'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
                 }`
               }
             >
@@ -42,8 +48,7 @@ export default function Navbar() {
           ))}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors ml-1"
-            title="Cerrar sesión"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-white/70 hover:text-white hover:bg-white/10 transition-colors ml-1"
           >
             <LogOut size={16} />
             <span className="hidden sm:inline">Salir</span>

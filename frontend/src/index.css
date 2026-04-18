@@ -4,31 +4,67 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    @apply font-sans;
+    background-color: #FFF7ED;
+    color: #1C1917;
   }
 }
 
 @layer components {
-  /* ── Admin UI (azul neutro) ── */
+  /* ── Admin UI (Driva Dev brand) ── */
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  .btn-primary   { @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500; }
-  .btn-secondary { @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-blue-500; }
-  .btn-danger    { @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500; }
-  .btn-green     { @apply btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-500; }
-  .card  { @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6; }
-  .input { @apply w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent; }
-  .label { @apply block text-sm font-medium text-gray-700 mb-1; }
-  .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
+  .btn-primary {
+    @apply btn text-white;
+    background-color: #EA580C;
+  }
+  .btn-primary:hover   { background-color: #c2410c; }
+  .btn-primary:focus   { --tw-ring-color: #EA580C; }
 
-  /* ── Booking / Public (Driva Dev brand) ── */
+  .btn-secondary {
+    @apply btn bg-white border-2 hover:bg-orange-50;
+    color: #9A3412;
+    border-color: #FED7AA;
+  }
+  .btn-secondary:focus { --tw-ring-color: #EA580C; }
+
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+  .btn-green {
+    @apply btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border p-6;
+    border-color: #FED7AA;
+  }
+
+  .input {
+    @apply w-full rounded-xl border-2 px-3 py-2 text-sm transition-colors focus:outline-none;
+    border-color: #FED7AA;
+    background-color: #fff;
+    color: #1C1917;
+  }
+  .input:focus { border-color: #EA580C; }
+
+  .label {
+    @apply block text-sm font-semibold mb-1;
+    color: #1C1917;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  /* ── Booking / Public (same brand) ── */
   .brand-btn {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
     background-color: #EA580C;
   }
-  .brand-btn:hover  { background-color: #c2410c; }
-  .brand-btn:focus  { --tw-ring-color: #EA580C; }
+  .brand-btn:hover { background-color: #c2410c; }
+  .brand-btn:focus { --tw-ring-color: #EA580C; }
 
   .brand-input {
     @apply w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-colors focus:outline-none;
@@ -36,7 +72,7 @@
     background-color: #fff;
     color: #1C1917;
   }
-  .brand-input:focus { border-color: #EA580C; }
+  .brand-input:focus       { border-color: #EA580C; }
   .brand-input::placeholder { color: #a8a29e; }
 
   .brand-slot {
@@ -45,7 +81,6 @@
     color: #9A3412;
     background: #fff;
   }
-  .brand-slot:hover     { border-color: #EA580C; background: #FFF7ED; }
-  .brand-slot.selected  { background: #EA580C; border-color: #EA580C; color: white; }
-  .brand-slot.disabled  { opacity: 0.4; cursor: not-allowed; }
+  .brand-slot:hover    { border-color: #EA580C; background: #FFF7ED; }
+  .brand-slot.selected { background: #EA580C; border-color: #EA580C; color: white; }
 }
