@@ -28,12 +28,12 @@ function ProtectedLayout() {
         <div className="px-4 py-3 text-sm font-medium flex items-center gap-3" style={{ background: '#FFF7ED', borderBottom: '1px solid #FED7AA', color: '#9A3412' }}>
           <MessageSquare size={16} className="shrink-0" style={{ color: '#EA580C' }} />
           <span>
-            Tu cuenta está <strong>pendiente de aprobación</strong> por Driva Dev. Podés explorar el sistema, pero aún no está activo para tus clientes.
-            {' '}Contactanos al{' '}
-            <a href="https://wa.me/5491139139022" target="_blank" rel="noopener noreferrer" className="underline font-bold" style={{ color: '#EA580C' }}>
+            Tu sistema aún no está activo. Para activarlo y que tus clientes puedan reservar,{' '}
+            <strong>realizá el pago</strong> contactándonos al{' '}
+            <a href="https://wa.me/5491139139022?text=Hola!%20Quiero%20activar%20mi%20sistema%20de%20turnos" target="_blank" rel="noopener noreferrer" className="underline font-bold" style={{ color: '#EA580C' }}>
               +54 11 3913-9022
             </a>
-            .
+            {' '}por WhatsApp. Mientras tanto, podés explorar y configurar todo el sistema.
           </span>
         </div>
       )}

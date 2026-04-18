@@ -34,7 +34,7 @@ export default function Register() {
             <CalendarDays className="text-white" size={28} />
           </div>
           <h1 className="text-2xl font-bold" style={{ color: '#9A3412' }}>Crear cuenta</h1>
-          <p className="text-stone-500 text-sm mt-1">Registrá tu negocio gratis</p>
+          <p className="text-stone-500 text-sm mt-1">Registrá tu negocio y explorá el sistema</p>
         </div>
 
         {error && (

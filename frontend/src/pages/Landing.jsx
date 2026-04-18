@@ -327,7 +327,7 @@ export default function Landing() {
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(234,88,12,0.5)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(234,88,12,0.4)'; }}
             >
-              <ArrowRight size={18} /> Crear mi cuenta gratis
+              <ArrowRight size={18} /> Crear mi cuenta
             </button>
             <a
               href="https://wa.me/5491139139022?text=Hola!%20Quiero%20saber%20más%20sobre%20TurnosGestion"
