@@ -16,7 +16,7 @@ router.put('/', async (req, res) => {
       if (!d) continue;
       if (typeof d.enabled !== 'boolean')
         return res.status(400).json({ error: `Campo enabled inválido en ${day}` });
-      if (d.enabled && (!d.start || !d.end || !d.slotDuration))
+      if (d.enabled && (!d.start || !d.end))
         return res.status(400).json({ error: `Faltan campos en ${day}` });
     }
     await db.updateSettings(req.user.tenantId, { schedule: JSON.stringify(schedule) });

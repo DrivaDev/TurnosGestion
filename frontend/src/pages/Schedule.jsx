@@ -12,7 +12,6 @@ const DAYS = [
   { key: 'domingo',   label: 'Domingo' },
 ];
 
-const SLOT_OPTS = [15, 20, 30, 45, 60];
 
 function buildCalendar(year, month) {
   const firstDay = new Date(year, month, 1).getDay();
@@ -36,9 +35,16 @@ export default function Schedule() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const DEFAULT_DAY = (enabled) => ({ enabled, start: '09:00', end: enabled ? '18:00' : '13:00' });
+
   useEffect(() => {
     Promise.all([api.getSchedule(), api.getBlockedDays()]).then(([sched, bd]) => {
-      setSchedule(sched);
+      const defaults = {
+        lunes: DEFAULT_DAY(true), martes: DEFAULT_DAY(true), miercoles: DEFAULT_DAY(true),
+        jueves: DEFAULT_DAY(true), viernes: DEFAULT_DAY(true),
+        sabado: DEFAULT_DAY(false), domingo: DEFAULT_DAY(false),
+      };
+      setSchedule({ ...defaults, ...sched });
       setBlockedDays(bd);
     });
   }, []);
@@ -111,7 +117,7 @@ export default function Schedule() {
         <h2 className="font-semibold text-gray-900">Horario semanal</h2>
         <div className="space-y-3">
           {DAYS.map(({ key, label }) => {
-            const d = schedule[key] || { enabled: false, start: '09:00', end: '18:00', slotDuration: 30 };
+            const d = schedule[key] || { enabled: false, start: '09:00', end: '18:00' };
             return (
               <div key={key} className={`flex flex-wrap items-center gap-4 p-4 rounded-xl border transition-colors ${
                 d.enabled ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
@@ -140,14 +146,7 @@ export default function Schedule() {
                         value={d.end || '18:00'}
                         onChange={e => updateDay(key, 'end', e.target.value)} />
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <label className="text-gray-500">Turno c/</label>
-                      <select className="input w-24"
-                        value={d.slotDuration || 30}
-                        onChange={e => updateDay(key, 'slotDuration', Number(e.target.value))}>
-                        {SLOT_OPTS.map(m => <option key={m} value={m}>{m} min</option>)}
-                      </select>
-                    </div>
+
                   </>
                 )}
               </div>

@@ -36,7 +36,8 @@ router.get('/:slug', async (req, res) => {
     const tid = tenant._id;
     const settings = await db.getAllSettings(tid);
 
-    const services = await Service.find({ tenantId: tenant._id, active: true }).sort({ createdAt: 1 }).lean({ virtuals: true });
+    const servicesDocs = await Service.find({ tenantId: tenant._id, active: true }).sort({ createdAt: 1 }).lean();
+    const services = servicesDocs.map(s => ({ ...s, id: s._id.toString(), _id: undefined }));
 
     res.json({
       businessName:        settings.business_name || tenant.name,
@@ -72,15 +73,18 @@ router.get('/:slug/slots', async (req, res) => {
     const schedule  = JSON.parse(await db.getSetting(tid, 'schedule') || '{}');
     const dayConfig = schedule[dayKey];
     if (!dayConfig?.enabled) return res.json({ slots: [], reason: 'día no habilitado' });
+    if (!dayConfig.start || !dayConfig.end) return res.json({ slots: [], reason: 'horario no configurado' });
 
-    const slotDuration = dayConfig.slotDuration || 30;
+    const slotDuration = 15;
 
     // If a service is specified, use its duration; otherwise use the slot interval
     let serviceDuration = slotDuration;
     const { serviceId } = req.query;
-    if (serviceId) {
-      const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
-      if (svc) serviceDuration = svc.durationMin;
+    if (serviceId && serviceId !== 'undefined' && serviceId !== 'null') {
+      try {
+        const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
+        if (svc) serviceDuration = svc.durationMin;
+      } catch (_) { /* invalid id format, use default */ }
     }
 
     // All possible start times (every slotDuration minutes)
@@ -90,7 +94,15 @@ router.get('/:slug/slots', async (req, res) => {
     const taken = await Appointment.find({
       tenantId: tid, date, status: { $ne: 'cancelado' },
     }).lean();
-    const takenTimes = new Set(taken.map(a => a.time));
+    const takenTimes = new Set();
+    for (const a of taken) {
+      const dur = a.durationMin || slotDuration;
+      const [ah, am] = a.time.split(':').map(Number);
+      const startMin = ah * 60 + am;
+      for (let cur = startMin; cur < startMin + dur; cur += slotDuration) {
+        takenTimes.add(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);
+      }
+    }
 
     // For each slot, check if all required consecutive time blocks are free
     const slots = [];
@@ -143,7 +155,7 @@ router.post('/:slug/book', async (req, res) => {
     const settings  = await db.getAllSettings(tid);
     const schedule  = JSON.parse(settings.schedule || '{}');
     const dayKey    = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][new Date(`${date}T12:00:00`).getDay()];
-    const slotDuration = schedule[dayKey]?.slotDuration || 30;
+    const slotDuration = 15;
     const blocksNeeded = durationMin ? Math.ceil(durationMin / slotDuration) : 1;
 
     const [h, m] = time.split(':').map(Number);

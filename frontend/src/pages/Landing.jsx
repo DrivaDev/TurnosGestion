@@ -158,8 +158,16 @@ export default function Landing() {
           </button>
         </div>
 
+        {/* Primer mes gratis callout */}
+        <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl mt-8"
+          style={{ background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.25)' }}>
+          <span className="text-lg">🎁</span>
+          <span className="text-sm font-semibold" style={{ color: '#4ade80' }}>Primer mes completamente gratis</span>
+          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>· luego $20.000/mes</span>
+        </div>
+
         {/* Social proof strip */}
-        <div className="flex items-center justify-center gap-6 mt-12 flex-wrap">
+        <div className="flex items-center justify-center gap-6 mt-6 flex-wrap">
           {['Sin contrato de permanencia', 'Configuración incluida', 'Soporte por WhatsApp'].map(t => (
             <div key={t} className="flex items-center gap-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
               <CheckCircle2 size={13} style={{ color: '#22c55e' }} />
@@ -317,44 +325,59 @@ export default function Landing() {
       </section>
 
       {/* ── Pricing ── */}
-      <section className="relative z-10 max-w-3xl mx-auto px-6 pb-24">
+      <section className="relative z-10 max-w-2xl mx-auto px-6 pb-24">
         <div className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">Precio simple y claro</h2>
           <p className="text-white/40 text-lg">Sin sorpresas, sin letras chicas.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Free month */}
-          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)' }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4" style={{ background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>
-              ✦ Primer mes
-            </div>
-            <p className="text-4xl font-extrabold text-white mb-1">$0</p>
-            <p className="text-white/40 text-sm mb-5">El primer mes es completamente gratis para que lo pruebes sin compromiso.</p>
-            <div className="space-y-2">
-              {['Página de reservas personalizada','Panel de gestión completo','WhatsApp automático incluido','Sin tarjeta de crédito'].map(f => (
-                <div key={f} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  <CheckCircle2 size={14} style={{ color: '#4ade80' }} className="shrink-0" /> {f}
-                </div>
-              ))}
+
+        {/* Single plan card */}
+        <div className="rounded-3xl p-8 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(234,88,12,0.12), rgba(249,115,22,0.06))', border: '1px solid rgba(234,88,12,0.25)' }}>
+          <div className="absolute top-0 right-0 w-48 h-48 rounded-full" style={{ background: 'radial-gradient(circle, rgba(234,88,12,0.12) 0%, transparent 70%)', transform: 'translate(20%,-20%)' }} />
+
+          {/* Free month badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl mb-6" style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
+            <span>🎁</span>
+            <span className="text-sm font-bold" style={{ color: '#4ade80' }}>Primer mes completamente gratis</span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-2">
+            <div>
+              <p className="text-5xl font-extrabold text-white">$20.000<span className="text-xl font-medium text-white/40">/mes</span></p>
+              <p className="text-white/40 text-sm mt-1">A partir del segundo mes · Cancelás cuando querés</p>
             </div>
           </div>
-          {/* Monthly */}
-          <div className="rounded-3xl p-7 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(234,88,12,0.15), rgba(249,115,22,0.08))', border: '1px solid rgba(234,88,12,0.3)' }}>
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full" style={{ background: 'radial-gradient(circle, rgba(234,88,12,0.15) 0%, transparent 70%)', transform: 'translate(20%,-20%)' }} />
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4" style={{ background: 'rgba(234,88,12,0.2)', color: '#F97316', border: '1px solid rgba(234,88,12,0.3)' }}>
-              ✦ Mensual
-            </div>
-            <p className="text-4xl font-extrabold text-white mb-1">$20.000<span className="text-lg font-medium text-white/40">/mes</span></p>
-            <p className="text-white/40 text-sm mb-5">A partir del segundo mes. Cancelás cuando querés, sin permanencia.</p>
-            <div className="space-y-2">
-              {['Todo lo del mes gratis','Diseño 100% personalizado','Actualizaciones incluidas','Soporte por WhatsApp'].map(f => (
-                <div key={f} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  <CheckCircle2 size={14} style={{ color: '#F97316' }} className="shrink-0" /> {f}
-                </div>
-              ))}
-            </div>
+
+          <div className="h-px my-6" style={{ background: 'rgba(255,255,255,0.08)' }} />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              'Página de reservas personalizada',
+              'Panel de gestión completo',
+              'Confirmaciones por WhatsApp',
+              'Recordatorios automáticos',
+              'Diseño 100% personalizado',
+              'Actualizaciones incluidas',
+              'Soporte por WhatsApp',
+              'Sin contrato de permanencia',
+            ].map(f => (
+              <div key={f} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <CheckCircle2 size={14} style={{ color: '#F97316' }} className="shrink-0" /> {f}
+              </div>
+            ))}
           </div>
+
+          <button
+            onClick={() => window.location.href = '/register'}
+            className="w-full mt-8 py-4 rounded-2xl font-bold text-white text-base transition-all"
+            style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)', boxShadow: '0 8px 25px rgba(234,88,12,0.3)' }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = '0 12px 35px rgba(234,88,12,0.5)'}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = '0 8px 25px rgba(234,88,12,0.3)'}
+          >
+            Empezar gratis el primer mes
+          </button>
         </div>
+
         <p className="text-center text-xs mt-4" style={{ color: 'rgba(255,255,255,0.2)' }}>
           Precios en pesos argentinos · El pago se realiza directamente con Driva Dev
         </p>

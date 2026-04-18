@@ -33,18 +33,30 @@ router.get('/available-slots', async (req, res) => {
     const schedule  = JSON.parse(await db.getSetting(tid, 'schedule') || '{}');
     const dayConfig = schedule[dayKey];
     if (!dayConfig?.enabled) return res.json({ slots: [], reason: 'día no habilitado' });
+    if (!dayConfig.start || !dayConfig.end) return res.json({ slots: [], reason: 'horario no configurado' });
 
-    const slotDuration = dayConfig.slotDuration || 30;
+    const slotDuration = 15;
 
     let serviceDuration = slotDuration;
-    if (req.query.serviceId) {
-      const svc = await Service.findOne({ _id: req.query.serviceId, tenantId: tid, active: true });
-      if (svc) serviceDuration = svc.durationMin;
+    const { serviceId } = req.query;
+    if (serviceId && serviceId !== 'undefined' && serviceId !== 'null') {
+      try {
+        const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
+        if (svc) serviceDuration = svc.durationMin;
+      } catch (_) { /* invalid id format, use default */ }
     }
 
     const allSlots = generateSlots(dayConfig.start, dayConfig.end, slotDuration);
     const taken = await Appointment.find({ tenantId: tid, date, status: { $ne: 'cancelado' }, ...(excludeId ? { _id: { $ne: excludeId } } : {}) }).lean();
-    const takenTimes = new Set(taken.map(a => a.time));
+    const takenTimes = new Set();
+    for (const a of taken) {
+      const dur = a.durationMin || slotDuration;
+      const [ah, am] = a.time.split(':').map(Number);
+      const startMin = ah * 60 + am;
+      for (let cur = startMin; cur < startMin + dur; cur += slotDuration) {
+        takenTimes.add(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`);
+      }
+    }
 
     const [eh, em] = dayConfig.end.split(':').map(Number);
     const slots = [];
