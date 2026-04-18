@@ -7,7 +7,8 @@ const tenantSchema = new Schema(
     slug:      { type: String, required: true, unique: true, lowercase: true },
     paidUntil: { type: Date, default: null },
     notes:     { type: String, default: '' },
-    active:    { type: Boolean, default: true },
+    active:        { type: Boolean, default: true },
+    deactivatedAt: { type: Date, default: null },
   },
   { timestamps: true, versionKey: false }
 );

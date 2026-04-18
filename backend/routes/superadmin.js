@@ -62,7 +62,11 @@ router.put('/tenants/:id', async (req, res) => {
     const { paidUntil, notes, active } = req.body;
     if (paidUntil !== undefined) tenant.paidUntil = paidUntil ? new Date(paidUntil) : null;
     if (notes     !== undefined) tenant.notes     = notes;
-    if (active    !== undefined) tenant.active     = active;
+    if (active    !== undefined) {
+      if (!active && tenant.active) tenant.deactivatedAt = new Date();
+      if (active)                   tenant.deactivatedAt = null;
+      tenant.active = active;
+    }
     await tenant.save();
 
     res.json({ ok: true });
