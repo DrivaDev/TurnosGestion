@@ -1,12 +1,11 @@
 const express = require('express');
 const router  = express.Router();
 const jwt     = require('jsonwebtoken');
-const { Tenant } = require('../db/models');
-const db = require('../database');
+const { Tenant, Appointment } = require('../db/models');
 
 const JWT_SECRET = () => process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
-// POST /api/admin/login  — login exclusivo de Driva Dev
+// POST /api/admin/login
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
   const adminEmail    = process.env.SUPERADMIN_EMAIL;
@@ -21,81 +20,50 @@ router.post('/login', (req, res) => {
   res.json({ token });
 });
 
-// GET /api/admin/tenants — lista todos los negocios
+// GET /api/admin/tenants
 router.get('/tenants', async (req, res) => {
   try {
     const tenants = await Tenant.find({}).sort({ createdAt: -1 }).lean();
+
+    const now   = new Date();
+    const y     = now.getFullYear();
+    const m     = now.getMonth();
+    const start = new Date(y, m, 1).toISOString().slice(0, 10);
+    const end   = new Date(y, m + 1, 0).toISOString().slice(0, 10);
+
     const list = await Promise.all(tenants.map(async t => {
-      const settings = await db.getAllSettings(t._id);
+      const [totalCount, monthCount] = await Promise.all([
+        Appointment.countDocuments({ tenantId: t._id }),
+        Appointment.countDocuments({ tenantId: t._id, date: { $gte: start, $lte: end } }),
+      ]);
+      const isPaid = t.paidUntil && new Date(t.paidUntil) >= now;
       return {
-        id:          t._id,
-        name:        t.name,
-        slug:        t.slug,
-        createdAt:   t.createdAt,
-        description: settings.business_description || '',
-        theme: {
-          primary:   settings.theme_primary   || '#EA580C',
-          secondary: settings.theme_secondary || '#9A3412',
-          accent:    settings.theme_accent    || '#FED7AA',
-          bg:        settings.theme_bg        || '#FFF7ED',
-          logo:      settings.theme_logo      || '',
-        },
+        id:        t._id,
+        name:      t.name,
+        slug:      t.slug,
+        active:    t.active,
+        notes:     t.notes || '',
+        paidUntil: t.paidUntil || null,
+        isPaid,
+        createdAt: t.createdAt,
+        stats: { total: totalCount, thisMonth: monthCount },
       };
     }));
     res.json(list);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET /api/admin/tenants/:id — detalle de un negocio
-router.get('/tenants/:id', async (req, res) => {
-  try {
-    const tenant = await Tenant.findById(req.params.id).lean();
-    if (!tenant) return res.status(404).json({ error: 'Negocio no encontrado' });
-    const settings = await db.getAllSettings(tenant._id);
-    res.json({
-      id:          tenant._id,
-      name:        tenant.name,
-      slug:        tenant.slug,
-      createdAt:   tenant.createdAt,
-      description: settings.business_description || '',
-      theme: {
-        primary:   settings.theme_primary   || '#EA580C',
-        secondary: settings.theme_secondary || '#9A3412',
-        accent:    settings.theme_accent    || '#FED7AA',
-        bg:        settings.theme_bg        || '#FFF7ED',
-        logo:      settings.theme_logo      || '',
-      },
-    });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// PUT /api/admin/tenants/:id — editar negocio (nombre, slug, tema, descripción)
+// PUT /api/admin/tenants/:id — editar estado de pago, notas, activo
 router.put('/tenants/:id', async (req, res) => {
   try {
     const tenant = await Tenant.findById(req.params.id);
     if (!tenant) return res.status(404).json({ error: 'Negocio no encontrado' });
 
-    const { name, slug, description, theme } = req.body;
-
-    if (name)  tenant.name = name;
-    if (slug) {
-      const existing = await Tenant.findOne({ slug, _id: { $ne: tenant._id } });
-      if (existing) return res.status(409).json({ error: 'Ese slug ya está en uso por otro negocio' });
-      tenant.slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
-    }
+    const { paidUntil, notes, active } = req.body;
+    if (paidUntil !== undefined) tenant.paidUntil = paidUntil ? new Date(paidUntil) : null;
+    if (notes     !== undefined) tenant.notes     = notes;
+    if (active    !== undefined) tenant.active     = active;
     await tenant.save();
-
-    const updates = {};
-    if (name)        updates.business_name        = name;
-    if (description !== undefined) updates.business_description = description;
-    if (theme) {
-      if (theme.primary)   updates.theme_primary   = theme.primary;
-      if (theme.secondary) updates.theme_secondary = theme.secondary;
-      if (theme.accent)    updates.theme_accent    = theme.accent;
-      if (theme.bg)        updates.theme_bg        = theme.bg;
-      if (theme.logo !== undefined) updates.theme_logo = theme.logo;
-    }
-    if (Object.keys(updates).length) await db.updateSettings(tenant._id, updates);
 
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }

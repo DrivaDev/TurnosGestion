@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { tenantConfigs } from '../tenantConfigs';
 import { CalendarDays, Clock, User, Phone, CheckCircle, ChevronLeft, ChevronRight, Loader2, MessageSquare } from 'lucide-react';
 
 const BASE = '/api/public';
@@ -130,12 +131,14 @@ export default function BookingPage() {
     </div>
   );
 
+  // Code config (tenantConfigs.js) takes priority over DB values
+  const codeConfig = tenantConfigs[slug]?.theme || {};
   const theme = {
-    primary:   business.theme?.primary   || '#EA580C',
-    secondary: business.theme?.secondary || '#9A3412',
-    accent:    business.theme?.accent    || '#FED7AA',
-    bg:        business.theme?.bg        || '#FFF7ED',
-    logo:      business.theme?.logo      || '',
+    primary:   codeConfig.primary   || business.theme?.primary   || '#EA580C',
+    secondary: codeConfig.secondary || business.theme?.secondary || '#9A3412',
+    accent:    codeConfig.accent    || business.theme?.accent    || '#FED7AA',
+    bg:        codeConfig.bg        || business.theme?.bg        || '#FFF7ED',
+    logo:      codeConfig.logo      || business.theme?.logo      || '',
   };
 
   const today = todayISO();

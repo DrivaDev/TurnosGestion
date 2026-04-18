@@ -3,8 +3,11 @@ const { Schema, model, models } = require('mongoose');
 // ── Tenant ────────────────────────────────────────────────────────────────────
 const tenantSchema = new Schema(
   {
-    name: { type: String, required: true },
-    slug: { type: String, required: true, unique: true, lowercase: true },
+    name:      { type: String, required: true },
+    slug:      { type: String, required: true, unique: true, lowercase: true },
+    paidUntil: { type: Date, default: null },
+    notes:     { type: String, default: '' },
+    active:    { type: Boolean, default: true },
   },
   { timestamps: true, versionKey: false }
 );
