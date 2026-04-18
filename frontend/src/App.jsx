@@ -10,6 +10,7 @@ import Schedule          from './pages/Schedule';
 import Settings          from './pages/Settings';
 import SuperAdminLogin   from './pages/SuperAdminLogin';
 import SuperAdmin        from './pages/SuperAdmin';
+import Landing           from './pages/Landing';
 
 function ProtectedLayout() {
   const { user, loading } = useAuth();
@@ -31,6 +32,13 @@ function ProtectedLayout() {
           <Route path="*"             element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
+      <footer className="border-t border-stone-200 py-4 text-center text-xs text-stone-400">
+        Desarrollado por{' '}
+        <a href="https://drivadev.com" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline" style={{ color: '#EA580C' }}>
+          Driva Dev
+        </a>
+        {' '}· Soluciones digitales a medida
+      </footer>
     </div>
   );
 }
@@ -47,6 +55,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/"             element={<Landing />} />
           <Route path="/login"        element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register"     element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/book/:slug"   element={<BookingPage />} />

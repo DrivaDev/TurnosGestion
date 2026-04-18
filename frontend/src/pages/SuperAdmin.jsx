@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, Loader2, CheckCircle2, XCircle, ExternalLink,
-  CalendarDays, TrendingUp, Edit2, Save, X, StickyNote,
+  CalendarDays, TrendingUp, Edit2, Save, X, StickyNote, Trash2,
 } from 'lucide-react';
 
 function adminReq(method, path, body) {
@@ -134,6 +134,15 @@ export default function SuperAdmin() {
     showToast('Cambios guardados');
   }
 
+  async function handleDelete(tenant) {
+    if (!window.confirm(`¿Eliminar "${tenant.name}" y todos sus datos? Esta acción no se puede deshacer.`)) return;
+    try {
+      await adminReq('DELETE', `/tenants/${tenant.id}`);
+      await load();
+      showToast(`"${tenant.name}" eliminado`);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
   function logout() { localStorage.removeItem('admin_token'); navigate('/admin/login'); }
 
   const paid   = tenants.filter(t => t.isPaid).length;
@@ -226,7 +235,7 @@ export default function SuperAdmin() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-white/20 text-white/60 hover:text-white transition-colors"
                   >
-                    <ExternalLink size={13} /> Ver página
+                    <ExternalLink size={13} /> Ver
                   </a>
                   <button
                     onClick={() => setEditing(t)}
@@ -234,6 +243,12 @@ export default function SuperAdmin() {
                     style={{ background: '#EA580C' }}
                   >
                     <Edit2 size={13} /> Editar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(t)}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-red-800/60 text-red-400 hover:bg-red-900/30 transition-colors"
+                  >
+                    <Trash2 size={13} />
                   </button>
                 </div>
               </div>

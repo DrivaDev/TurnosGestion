@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, Send, Loader2, Eye, EyeOff, Info, Link, Copy, Check } from 'lucide-react';
+import { Save, Send, Loader2, Eye, EyeOff, Info, Link, Copy, Check, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 
@@ -84,6 +84,19 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 max-w-2xl">
+      <a
+        href="https://wa.me/5491139139022"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:opacity-90"
+        style={{ background: '#dcfce7', border: '1px solid #bbf7d0', color: '#166534' }}
+      >
+        <MessageCircle size={18} style={{ color: '#16a34a' }} className="shrink-0" />
+        <span>
+          ¿Problemas o consultas? Contactanos por WhatsApp al{' '}
+          <strong>+54 11 3913-9022</strong> y te ayudamos al instante.
+        </span>
+      </a>
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium ${
           toast.type === 'error' ? 'bg-red-600' : 'bg-green-600'

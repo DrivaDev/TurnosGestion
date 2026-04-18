@@ -53,6 +53,22 @@ router.get('/tenants', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// DELETE /api/admin/tenants/:id — eliminar negocio y todos sus datos
+router.delete('/tenants/:id', async (req, res) => {
+  try {
+    const { Tenant, User, Config, Appointment } = require('../db/models');
+    const tenant = await Tenant.findById(req.params.id);
+    if (!tenant) return res.status(404).json({ error: 'Negocio no encontrado' });
+    await Promise.all([
+      Appointment.deleteMany({ tenantId: tenant._id }),
+      User.deleteMany({ tenantId: tenant._id }),
+      Config.deleteOne({ _id: tenant._id }),
+      Tenant.deleteOne({ _id: tenant._id }),
+    ]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // PUT /api/admin/tenants/:id — editar estado de pago, notas, activo
 router.put('/tenants/:id', async (req, res) => {
   try {
