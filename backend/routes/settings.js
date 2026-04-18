@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 router.put('/', async (req, res) => {
   try {
     const allowed = [
-      'business_name','reminder_minutes',
+      'business_name','business_description','reminder_minutes',
       'confirmation_message','reminder_message',
       'twilio_account_sid','twilio_auth_token','twilio_whatsapp_from',
     ];

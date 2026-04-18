@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Save, Send, Loader2, Eye, EyeOff, Info } from 'lucide-react';
+import { Save, Send, Loader2, Eye, EyeOff, Info, Link, Copy, Check } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 
 const REMINDER_OPTS = [
@@ -13,8 +14,19 @@ const REMINDER_OPTS = [
 ];
 
 export default function Settings() {
+  const { user } = useAuth();
+  const [copied, setCopied] = useState(false);
+  const bookingURL = user?.slug ? `${window.location.origin}/book/${user.slug}` : '';
+
+  function copyURL() {
+    navigator.clipboard.writeText(bookingURL);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   const [form, setForm] = useState({
     business_name: '',
+    business_description: '',
     reminder_minutes: '60',
     confirmation_message: '',
     reminder_message: '',
@@ -85,6 +97,26 @@ export default function Settings() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
+        {/* Booking URL */}
+        {bookingURL && (
+          <div className="card space-y-3" style={{ borderColor: '#FED7AA', background: '#FFF7ED' }}>
+            <h2 className="font-semibold flex items-center gap-2" style={{ color: '#9A3412' }}>
+              <Link size={16} /> Página de reservas para tus clientes
+            </h2>
+            <p className="text-sm text-stone-500">Compartí este enlace con tus clientes para que puedan reservar turnos online.</p>
+            <div className="flex gap-2">
+              <input className="input flex-1 font-mono text-xs bg-white" value={bookingURL} readOnly />
+              <button type="button" className="btn-secondary shrink-0" onClick={copyURL}>
+                {copied ? <Check size={15} className="text-green-600" /> : <Copy size={15} />}
+                {copied ? 'Copiado' : 'Copiar'}
+              </button>
+              <a href={bookingURL} target="_blank" rel="noopener noreferrer" className="btn-secondary shrink-0 text-xs">
+                Ver página
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* General */}
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-900">General</h2>
@@ -93,6 +125,12 @@ export default function Settings() {
             <input className="input" value={form.business_name}
               onChange={e => set('business_name', e.target.value)}
               placeholder="Mi Peluquería" />
+          </div>
+          <div>
+            <label className="label">Descripción (aparece en la página de reservas)</label>
+            <textarea className="input" rows={2} value={form.business_description}
+              onChange={e => set('business_description', e.target.value)}
+              placeholder="Ej: Peluquería para hombres en el centro. Cortes modernos y clásicos." />
           </div>
         </div>
 

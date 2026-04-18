@@ -11,10 +11,27 @@ const JWT_EXPIRES = '30d';
 
 function makeToken(user, tenant) {
   return jwt.sign(
-    { userId: user._id, tenantId: tenant._id, role: user.role, businessName: tenant.name },
+    { userId: user._id, tenantId: tenant._id, role: user.role, businessName: tenant.name, slug: tenant.slug },
     JWT_SECRET(),
     { expiresIn: JWT_EXPIRES }
   );
+}
+
+function generateSlug(name) {
+  return name
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 50);
+}
+
+async function uniqueSlug(base) {
+  let slug = base;
+  let i = 2;
+  while (await Tenant.exists({ slug })) { slug = `${base}-${i++}`; }
+  return slug;
 }
 
 // POST /api/auth/register
@@ -26,16 +43,19 @@ router.post('/register', async (req, res) => {
     if (password.length < 6)
       return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
 
-    const existing = await User.findOne({ email: email.toLowerCase() });
-    if (existing) return res.status(409).json({ error: 'Ya existe una cuenta con ese email' });
+    if (await User.exists({ email: email.toLowerCase() }))
+      return res.status(409).json({ error: 'Ya existe una cuenta con ese email' });
 
-    const tenant = await Tenant.create({ name: businessName });
+    const slug   = await uniqueSlug(generateSlug(businessName));
+    const tenant = await Tenant.create({ name: businessName, slug });
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await User.create({ tenantId: tenant._id, name, email, passwordHash, role: 'admin' });
-
+    const user   = await User.create({ tenantId: tenant._id, name, email, passwordHash, role: 'admin' });
     await initTenantConfig(tenant._id, businessName);
 
-    res.status(201).json({ token: makeToken(user, tenant), user: { name: user.name, email: user.email, role: user.role, businessName: tenant.name } });
+    res.status(201).json({
+      token: makeToken(user, tenant),
+      user: { name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug },
+    });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -47,13 +67,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email y contraseña requeridos' });
 
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(401).json({ error: 'Email o contraseña incorrectos' });
-
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) return res.status(401).json({ error: 'Email o contraseña incorrectos' });
+    if (!user || !(await bcrypt.compare(password, user.passwordHash)))
+      return res.status(401).json({ error: 'Email o contraseña incorrectos' });
 
     const tenant = await Tenant.findById(user.tenantId);
-    res.json({ token: makeToken(user, tenant), user: { name: user.name, email: user.email, role: user.role, businessName: tenant.name } });
+    res.json({
+      token: makeToken(user, tenant),
+      user: { name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug },
+    });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -63,7 +84,7 @@ router.get('/me', auth, async (req, res) => {
     const user   = await User.findById(req.user.userId).select('-passwordHash');
     const tenant = await Tenant.findById(req.user.tenantId);
     if (!user || !tenant) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ name: user.name, email: user.email, role: user.role, businessName: tenant.name });
+    res.json({ name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

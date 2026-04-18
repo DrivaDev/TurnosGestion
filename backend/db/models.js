@@ -1,8 +1,11 @@
 const { Schema, model, models } = require('mongoose');
 
-// ── Tenant (negocio) ──────────────────────────────────────────────────────────
+// ── Tenant ────────────────────────────────────────────────────────────────────
 const tenantSchema = new Schema(
-  { name: { type: String, required: true } },
+  {
+    name: { type: String, required: true },
+    slug: { type: String, required: true, unique: true, lowercase: true },
+  },
   { timestamps: true, versionKey: false }
 );
 tenantSchema.set('toJSON', { virtuals: true, transform: (_, r) => { delete r._id; return r; } });
@@ -19,10 +22,10 @@ const userSchema = new Schema(
   { timestamps: true, versionKey: false }
 );
 
-// ── Config (settings + blocked_days por tenant) ───────────────────────────────
+// ── Config ────────────────────────────────────────────────────────────────────
 const configSchema = new Schema(
   {
-    _id:          { type: Schema.Types.ObjectId },   // = tenantId
+    _id:          { type: Schema.Types.ObjectId },
     settings:     { type: Map, of: String, default: {} },
     blocked_days: { type: [String], default: [] },
   },
@@ -39,6 +42,7 @@ const appointmentSchema = new Schema(
     time:              { type: String, required: true },
     notes:             { type: String, default: null },
     status:            { type: String, default: 'confirmado' },
+    source:            { type: String, default: 'admin' }, // 'admin' | 'web'
     confirmation_sent: { type: Number, default: 0 },
     reminder_sent:     { type: Number, default: 0 },
   },

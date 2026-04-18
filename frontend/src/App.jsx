@@ -1,18 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Navbar      from './components/Navbar';
-import Login       from './pages/Login';
-import Register    from './pages/Register';
-import Dashboard   from './pages/Dashboard';
+import Navbar       from './components/Navbar';
+import Login        from './pages/Login';
+import Register     from './pages/Register';
+import BookingPage  from './pages/BookingPage';
+import Dashboard    from './pages/Dashboard';
 import Appointments from './pages/Appointments';
-import Schedule    from './pages/Schedule';
-import Settings    from './pages/Settings';
+import Schedule     from './pages/Schedule';
+import Settings     from './pages/Settings';
 
 function ProtectedLayout() {
   const { user, loading } = useAuth();
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
     </div>
   );
   if (!user) return <Navigate to="/login" replace />;
@@ -21,11 +22,11 @@ function ProtectedLayout() {
       <Navbar />
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
         <Routes>
-          <Route path="/dashboard"   element={<Dashboard />} />
+          <Route path="/dashboard"    element={<Dashboard />} />
           <Route path="/appointments" element={<Appointments />} />
-          <Route path="/schedule"    element={<Schedule />} />
-          <Route path="/settings"    element={<Settings />} />
-          <Route path="*"            element={<Navigate to="/dashboard" replace />} />
+          <Route path="/schedule"     element={<Schedule />} />
+          <Route path="/settings"     element={<Settings />} />
+          <Route path="*"             element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
     </div>
@@ -44,9 +45,10 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-          <Route path="/*"        element={<ProtectedLayout />} />
+          <Route path="/login"      element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register"   element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/book/:slug" element={<BookingPage />} />
+          <Route path="/*"          element={<ProtectedLayout />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

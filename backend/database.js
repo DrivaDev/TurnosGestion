@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS = {
   confirmation_message: '¡Hola {nombre}! ✅ Tu turno fue confirmado para el *{fecha}* a las *{hora}*. ¡Te esperamos!',
   reminder_message:     '¡Hola {nombre}! 🔔 Te recordamos que tenés un turno hoy a las *{hora}*. ¡No te olvides!',
   business_name: 'Mi Local',
+  business_description: '',
 };
 
 async function getConfig(tenantId) {
@@ -22,7 +23,6 @@ async function getConfig(tenantId) {
   return cfg;
 }
 
-// ── Settings ──────────────────────────────────────────────────────────────────
 async function getSetting(tenantId, key) {
   const cfg = await getConfig(tenantId);
   return cfg.settings.get(key) ?? DEFAULT_SETTINGS[key] ?? null;
@@ -49,7 +49,6 @@ async function initTenantConfig(tenantId, businessName) {
   );
 }
 
-// ── Blocked Days ──────────────────────────────────────────────────────────────
 async function getBlockedDays(tenantId) {
   const cfg = await getConfig(tenantId);
   return [...cfg.blocked_days].sort();
@@ -63,7 +62,6 @@ async function removeBlockedDay(tenantId, date) {
   await Config.findByIdAndUpdate(tenantId, { $pull: { blocked_days: date } });
 }
 
-// ── Appointments ──────────────────────────────────────────────────────────────
 async function getAppointments(tenantId, { date, month, status } = {}) {
   const q = { tenantId };
   if (date)   q.date = date;
@@ -76,8 +74,8 @@ async function getAppointment(tenantId, id) {
   return Appointment.findOne({ _id: id, tenantId }).lean({ virtuals: true });
 }
 
-async function createAppointment(tenantId, { name, phone, date, time, notes }) {
-  const apt = await Appointment.create({ tenantId, name, phone, date, time, notes });
+async function createAppointment(tenantId, { name, phone, date, time, notes, source = 'admin' }) {
+  const apt = await Appointment.create({ tenantId, name, phone, date, time, notes, source });
   return apt.toJSON();
 }
 
@@ -99,10 +97,7 @@ async function isSlotTaken(tenantId, date, time, excludeId = null) {
 async function getPendingReminders(tenantId) {
   const today = new Date().toISOString().slice(0, 10);
   return Appointment.find({
-    tenantId,
-    reminder_sent: 0,
-    status: { $ne: 'cancelado' },
-    date: { $gte: today },
+    tenantId, reminder_sent: 0, status: { $ne: 'cancelado' }, date: { $gte: today },
   }).lean({ virtuals: true });
 }
 
