@@ -54,6 +54,7 @@ export default function BookingPage() {
 
   const [business, setBusiness] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [unavailable, setUnavailable] = useState(null); // 'inactive' | 'pending'
 
   // Step: 'date' | 'time' | 'form' | 'success'
   const [step, setStep]           = useState('date');
@@ -72,8 +73,15 @@ export default function BookingPage() {
 
   useEffect(() => {
     fetch(`${BASE}/${slug}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setBusiness(d); else setNotFound(true); })
+      .then(async r => {
+        if (r.ok) return r.json();
+        const d = await r.json().catch(() => ({}));
+        if (d.error === 'inactive') setUnavailable('inactive');
+        else if (d.error === 'pending') setUnavailable('pending');
+        else setNotFound(true);
+        return null;
+      })
+      .then(d => { if (d) setBusiness(d); })
       .catch(() => setNotFound(true));
   }, [slug]);
 
@@ -124,6 +132,21 @@ export default function BookingPage() {
       return { year: y, month: m };
     });
   }
+
+  if (unavailable) return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" style={{ background: '#FFF7ED' }}>
+      <CalendarDays size={48} style={{ color: '#EA580C' }} className="mb-4 opacity-40" />
+      <h1 className="text-2xl font-bold mb-2" style={{ color: '#9A3412' }}>
+        {unavailable === 'inactive' ? 'Negocio no disponible' : 'Próximamente'}
+      </h1>
+      <p className="text-stone-500 max-w-xs">
+        {unavailable === 'inactive'
+          ? 'Este negocio no está tomando turnos en este momento. Volvé más tarde.'
+          : 'Esta página de reservas estará disponible muy pronto.'}
+      </p>
+      <DrivaBadge />
+    </div>
+  );
 
   if (notFound) return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#FFF7ED' }}>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, Loader2, CheckCircle2, XCircle, ExternalLink,
-  CalendarDays, TrendingUp, Edit2, Save, X, StickyNote, Trash2,
+  CalendarDays, TrendingUp, Edit2, Save, X, StickyNote, Trash2, Clock,
 } from 'lucide-react';
 
 function adminReq(method, path, body) {
@@ -37,6 +37,7 @@ function EditModal({ tenant, onClose, onSave }) {
     paidUntil: tenant.paidUntil ? tenant.paidUntil.slice(0, 10) : '',
     notes:     tenant.notes || '',
     active:    tenant.active,
+    approved:  tenant.approved,
   });
   const [saving, setSaving] = useState(false);
 
@@ -77,15 +78,20 @@ function EditModal({ tenant, onClose, onSave }) {
           />
         </div>
 
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-white/70 font-medium">Negocio activo</label>
-          <button
-            onClick={() => setForm(f => ({ ...f, active: !f.active }))}
-            className={`w-11 h-6 rounded-full transition-colors relative ${form.active ? 'bg-orange-600' : 'bg-white/20'}`}
-          >
-            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${form.active ? 'left-5' : 'left-0.5'}`} />
-          </button>
-        </div>
+        {[
+          { key: 'approved', label: 'Aprobado (puede recibir turnos)' },
+          { key: 'active',   label: 'Negocio activo (visible al público)' },
+        ].map(({ key, label }) => (
+          <div key={key} className="flex items-center gap-3">
+            <label className="text-sm text-white/70 font-medium flex-1">{label}</label>
+            <button
+              onClick={() => setForm(f => ({ ...f, [key]: !f[key] }))}
+              className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${form[key] ? 'bg-orange-600' : 'bg-white/20'}`}
+            >
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${form[key] ? 'left-5' : 'left-0.5'}`} />
+            </button>
+          </div>
+        ))}
 
         <div className="flex gap-3 pt-1">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white/60 hover:text-white text-sm font-semibold transition-colors">
@@ -145,8 +151,9 @@ export default function SuperAdmin() {
 
   function logout() { localStorage.removeItem('admin_token'); navigate('/admin/login'); }
 
-  const paid   = tenants.filter(t => t.isPaid).length;
-  const unpaid = tenants.length - paid;
+  const paid     = tenants.filter(t => t.isPaid).length;
+  const unpaid   = tenants.length - paid;
+  const pending  = tenants.filter(t => !t.approved).length;
   const totalMonth = tenants.reduce((s, t) => s + t.stats.thisMonth, 0);
 
   if (loading) return (
@@ -176,12 +183,19 @@ export default function SuperAdmin() {
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
         {/* Summary cards */}
+        {pending > 0 && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium" style={{ background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.3)', color: '#F97316' }}>
+            <Clock size={16} className="shrink-0" />
+            {pending} negocio{pending !== 1 ? 's' : ''} pendiente{pending !== 1 ? 's' : ''} de aprobación — revisalos y activá el toggle "Aprobado" en cada uno.
+          </div>
+        )}
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Negocios',       value: tenants.length,  color: '#EA580C' },
-            { label: 'Al día',         value: paid,            color: '#22c55e' },
-            { label: 'Pendiente pago', value: unpaid,          color: '#f87171' },
-            { label: 'Turnos este mes',value: totalMonth,      color: '#60a5fa' },
+            { label: 'Negocios',         value: tenants.length,  color: '#EA580C' },
+            { label: 'Aprobados',        value: tenants.length - pending, color: '#22c55e' },
+            { label: 'Sin aprobar',      value: pending,         color: '#fb923c' },
+            { label: 'Turnos este mes',  value: totalMonth,      color: '#60a5fa' },
           ].map(({ label, value, color }) => (
             <div key={label} className="rounded-2xl border border-white/10 p-4" style={{ background: '#27211e' }}>
               <p className="text-xs text-white/40 mb-1">{label}</p>
@@ -200,6 +214,11 @@ export default function SuperAdmin() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="font-bold text-white text-base">{t.name}</span>
+                    {!t.approved && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-900/40 text-orange-400 border border-orange-700/40">
+                        <Clock size={10} /> Pendiente
+                      </span>
+                    )}
                     {!t.active && (
                       <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-white/40">inactivo</span>
                     )}

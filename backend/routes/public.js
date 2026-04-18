@@ -19,11 +19,19 @@ function generateSlots(start, end, durationMin) {
   return slots;
 }
 
+function tenantStatus(tenant) {
+  if (!tenant) return { ok: false, status: 404, error: 'Negocio no encontrado' };
+  if (!tenant.active) return { ok: false, status: 410, error: 'inactive', message: 'Este negocio no está disponible en este momento.' };
+  if (!tenant.approved) return { ok: false, status: 503, error: 'pending', message: 'Este negocio aún no ha sido activado.' };
+  return { ok: true };
+}
+
 // GET /api/public/:slug — info del negocio para la página de reservas
 router.get('/:slug', async (req, res) => {
   try {
     const tenant = await Tenant.findOne({ slug: req.params.slug });
-    if (!tenant) return res.status(404).json({ error: 'Negocio no encontrado' });
+    const check = tenantStatus(tenant);
+    if (!check.ok) return res.status(check.status).json({ error: check.error, message: check.message });
 
     const tid = tenant._id;
     const settings = await db.getAllSettings(tid);
@@ -47,7 +55,8 @@ router.get('/:slug', async (req, res) => {
 router.get('/:slug/slots', async (req, res) => {
   try {
     const tenant = await Tenant.findOne({ slug: req.params.slug });
-    if (!tenant) return res.status(404).json({ error: 'Negocio no encontrado' });
+    const check = tenantStatus(tenant);
+    if (!check.ok) return res.status(check.status).json({ error: check.error });
 
     const tid  = tenant._id;
     const { date } = req.query;
@@ -74,7 +83,8 @@ router.get('/:slug/slots', async (req, res) => {
 router.post('/:slug/book', async (req, res) => {
   try {
     const tenant = await Tenant.findOne({ slug: req.params.slug });
-    if (!tenant) return res.status(404).json({ error: 'Negocio no encontrado' });
+    const check = tenantStatus(tenant);
+    if (!check.ok) return res.status(check.status).json({ error: check.error });
 
     const tid = tenant._id;
     const { name, phone, date, time, notes } = req.body;

@@ -78,6 +78,7 @@ export default function DrivaDevBooking() {
   const { slug } = useParams();
   const [business, setBusiness]     = useState(null);
   const [notFound, setNotFound]     = useState(false);
+  const [unavailable, setUnavailable] = useState(null);
   const [step, setStep]             = useState('date');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -94,8 +95,15 @@ export default function DrivaDevBooking() {
 
   useEffect(() => {
     fetch(`${BASE}/${slug}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setBusiness(d); else setNotFound(true); })
+      .then(async r => {
+        if (r.ok) return r.json();
+        const d = await r.json().catch(() => ({}));
+        if (d.error === 'inactive') setUnavailable('inactive');
+        else if (d.error === 'pending') setUnavailable('pending');
+        else setNotFound(true);
+        return null;
+      })
+      .then(d => { if (d) setBusiness(d); })
       .catch(() => setNotFound(true));
   }, [slug]);
 
@@ -140,6 +148,22 @@ export default function DrivaDevBooking() {
       return { year: y, month: m };
     });
   }
+
+  if (unavailable) return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" style={{ background: '#0A0A0A' }}>
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: 'rgba(234,88,12,0.12)' }}>
+        <Zap size={28} style={{ color: '#F97316' }} />
+      </div>
+      <h1 className="text-2xl font-bold text-white mb-2">
+        {unavailable === 'inactive' ? 'No disponible por el momento' : 'Próximamente'}
+      </h1>
+      <p className="text-white/40 max-w-xs">
+        {unavailable === 'inactive'
+          ? 'La agenda de Driva Dev no está activa en este momento. Volvé pronto.'
+          : 'La agenda estará disponible muy pronto.'}
+      </p>
+    </div>
+  );
 
   if (notFound) return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#0A0A0A' }}>

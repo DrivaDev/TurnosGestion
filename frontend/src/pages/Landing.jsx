@@ -27,8 +27,8 @@ const FEATURES = [
   },
   {
     icon: Shield,
-    title: 'Tu página propia',
-    desc: 'Cada negocio tiene su URL única (/book/tu-negocio) con tus colores y logo.',
+    title: '100% personalizable',
+    desc: 'Tu página con tus colores, logo, tipografía y contenido. Diseñada a medida por Driva Dev.',
   },
   {
     icon: Zap,
@@ -83,12 +83,13 @@ export default function Landing() {
           >
             Ingresar
           </button>
-          <a href="https://wa.me/5491139139022" target="_blank" rel="noopener noreferrer"
+          <button
+            onClick={() => navigate('/register')}
             className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl text-white transition-all"
             style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)' }}
           >
             Quiero mi sistema <ArrowRight size={14} />
-          </a>
+          </button>
         </div>
       </nav>
 
@@ -113,17 +114,15 @@ export default function Landing() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a
-            href="https://wa.me/5491139139022?text=Hola!%20Quiero%20saber%20más%20sobre%20TurnosGestion"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => navigate('/register')}
             className="flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-white text-base transition-all"
             style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)', boxShadow: '0 8px 30px rgba(234,88,12,0.35)' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(234,88,12,0.5)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(234,88,12,0.35)'; }}
           >
-            <MessageSquare size={18} /> Quiero mi sistema por WhatsApp
-          </a>
+            <ArrowRight size={18} /> Quiero mi sistema
+          </button>
           <button
             onClick={() => navigate('/login')}
             className="px-8 py-4 rounded-2xl font-semibold text-base transition-all"
@@ -217,6 +216,63 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Customization highlight ── */}
+      <section className="relative z-10 max-w-5xl mx-auto px-6 pb-24">
+        <div className="rounded-3xl overflow-hidden" style={{ background: 'rgba(234,88,12,0.06)', border: '1px solid rgba(234,88,12,0.15)' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+            <div className="p-10 flex flex-col justify-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-5 w-fit" style={{ background: 'rgba(234,88,12,0.15)', color: '#F97316', border: '1px solid rgba(234,88,12,0.25)' }}>
+                <Zap size={12} /> Diferencial Driva Dev
+              </div>
+              <h2 className="text-3xl font-extrabold text-white mb-4 leading-tight">
+                Tu página,<br />
+                <span style={{ background: 'linear-gradient(135deg,#EA580C,#F97316,#FDBA74)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  100% única
+                </span>
+              </h2>
+              <p className="text-white/50 leading-relaxed mb-6">
+                No somos un constructor de páginas con plantillas. Nosotros diseñamos y programamos
+                la página de reservas de tu negocio <strong className="text-white/70">desde cero</strong>.
+                Colores, logo, tipografía, secciones, textos — todo como vos lo imaginás.
+              </p>
+              <div className="space-y-2">
+                {[
+                  'Colores y logo de tu marca',
+                  'Diseño exclusivo, sin plantillas genéricas',
+                  'Actualizable cuando lo necesites',
+                  'Optimizada para mobile',
+                ].map(item => (
+                  <div key={item} className="flex items-center gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                    <CheckCircle2 size={15} style={{ color: '#22c55e' }} className="shrink-0" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Visual right side */}
+            <div className="p-8 flex items-center justify-center" style={{ borderLeft: '1px solid rgba(234,88,12,0.1)' }}>
+              <div className="w-full max-w-xs space-y-3">
+                {[
+                  { color: '#EA580C', label: 'Negocio A — naranja' },
+                  { color: '#2563EB', label: 'Negocio B — azul' },
+                  { color: '#16A34A', label: 'Negocio C — verde' },
+                  { color: '#9333EA', label: 'Negocio D — violeta' },
+                ].map(({ color, label }) => (
+                  <div key={label} className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="w-8 h-8 rounded-xl shrink-0" style={{ background: color }} />
+                    <div>
+                      <div className="h-2 w-24 rounded mb-1.5" style={{ background: color, opacity: 0.6 }} />
+                      <div className="h-1.5 w-16 rounded" style={{ background: 'rgba(255,255,255,0.15)' }} />
+                    </div>
+                    <span className="text-xs ml-auto" style={{ color: 'rgba(255,255,255,0.3)' }}>{label.split('—')[1]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── How it works ── */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-24">
         <div className="text-center mb-12">
@@ -263,17 +319,28 @@ export default function Landing() {
           <p className="mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Escribinos por WhatsApp y en menos de 24hs tu negocio está tomando turnos online.
           </p>
-          <a
-            href="https://wa.me/5491139139022?text=Hola!%20Quiero%20saber%20más%20sobre%20TurnosGestion"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-white text-base transition-all"
-            style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)', boxShadow: '0 8px 30px rgba(234,88,12,0.4)' }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(234,88,12,0.5)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(234,88,12,0.4)'; }}
-          >
-            <MessageSquare size={18} /> Escribinos por WhatsApp
-          </a>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => navigate('/register')}
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-white text-base transition-all"
+              style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)', boxShadow: '0 8px 30px rgba(234,88,12,0.4)' }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(234,88,12,0.5)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(234,88,12,0.4)'; }}
+            >
+              <ArrowRight size={18} /> Crear mi cuenta gratis
+            </button>
+            <a
+              href="https://wa.me/5491139139022?text=Hola!%20Quiero%20saber%20más%20sobre%20TurnosGestion"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+            >
+              <MessageSquare size={18} /> Tengo dudas, escribinos
+            </a>
+          </div>
         </div>
       </section>
 

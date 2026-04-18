@@ -11,6 +11,7 @@ import Settings          from './pages/Settings';
 import SuperAdminLogin   from './pages/SuperAdminLogin';
 import SuperAdmin        from './pages/SuperAdmin';
 import Landing           from './pages/Landing';
+import { MessageSquare } from 'lucide-react';
 
 function ProtectedLayout() {
   const { user, loading } = useAuth();
@@ -23,6 +24,19 @@ function ProtectedLayout() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      {!user.approved && (
+        <div className="px-4 py-3 text-sm font-medium flex items-center gap-3" style={{ background: '#FFF7ED', borderBottom: '1px solid #FED7AA', color: '#9A3412' }}>
+          <MessageSquare size={16} className="shrink-0" style={{ color: '#EA580C' }} />
+          <span>
+            Tu cuenta está <strong>pendiente de aprobación</strong> por Driva Dev. Podés explorar el sistema, pero aún no está activo para tus clientes.
+            {' '}Contactanos al{' '}
+            <a href="https://wa.me/5491139139022" target="_blank" rel="noopener noreferrer" className="underline font-bold" style={{ color: '#EA580C' }}>
+              +54 11 3913-9022
+            </a>
+            .
+          </span>
+        </div>
+      )}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
         <Routes>
           <Route path="/dashboard"    element={<Dashboard />} />

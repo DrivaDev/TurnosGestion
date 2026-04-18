@@ -42,6 +42,7 @@ router.get('/tenants', async (req, res) => {
         name:      t.name,
         slug:      t.slug,
         active:    t.active,
+        approved:  t.approved,
         notes:     t.notes || '',
         paidUntil: t.paidUntil || null,
         isPaid,
@@ -75,9 +76,10 @@ router.put('/tenants/:id', async (req, res) => {
     const tenant = await Tenant.findById(req.params.id);
     if (!tenant) return res.status(404).json({ error: 'Negocio no encontrado' });
 
-    const { paidUntil, notes, active } = req.body;
+    const { paidUntil, notes, active, approved } = req.body;
     if (paidUntil !== undefined) tenant.paidUntil = paidUntil ? new Date(paidUntil) : null;
     if (notes     !== undefined) tenant.notes     = notes;
+    if (approved  !== undefined) tenant.approved  = approved;
     if (active    !== undefined) {
       if (!active && tenant.active) tenant.deactivatedAt = new Date();
       if (active)                   tenant.deactivatedAt = null;

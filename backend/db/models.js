@@ -8,6 +8,7 @@ const tenantSchema = new Schema(
     paidUntil: { type: Date, default: null },
     notes:     { type: String, default: '' },
     active:        { type: Boolean, default: true },
+    approved:      { type: Boolean, default: false },
     deactivatedAt: { type: Date, default: null },
   },
   { timestamps: true, versionKey: false }
