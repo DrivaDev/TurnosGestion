@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { tenantConfigs } from '../tenantConfigs';
+import DrivaDevBooking from './tenants/DrivaDevBooking';
+
+// Map slug → custom page component. Add entries here for fully custom clients.
+const CUSTOM_PAGES = {
+  'driva-dev': DrivaDevBooking,
+};
 import { CalendarDays, Clock, User, Phone, CheckCircle, ChevronLeft, ChevronRight, Loader2, MessageSquare } from 'lucide-react';
 
 const BASE = '/api/public';
@@ -43,6 +49,9 @@ function DrivaBadge() {
 
 export default function BookingPage() {
   const { slug } = useParams();
+  const CustomPage = CUSTOM_PAGES[slug];
+  if (CustomPage) return <CustomPage />;
+
   const [business, setBusiness] = useState(null);
   const [notFound, setNotFound] = useState(false);
 
