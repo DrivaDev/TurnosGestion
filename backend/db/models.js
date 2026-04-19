@@ -48,6 +48,8 @@ const appointmentSchema = new Schema(
     notes:             { type: String, default: null },
     serviceName:       { type: String, default: null },
     durationMin:       { type: Number, default: null },
+    staffId:           { type: Schema.Types.ObjectId, ref: 'Staff', default: null },
+    staffName:         { type: String, default: null },
     status:            { type: String, default: 'confirmado' },
     source:            { type: String, default: 'admin' }, // 'admin' | 'web'
     confirmation_sent: { type: Number, default: 0 },
@@ -71,10 +73,25 @@ const serviceSchema = new Schema(
 );
 serviceSchema.set('toJSON', { virtuals: true, transform: (_, r) => { delete r._id; return r; } });
 
+// ── Staff ─────────────────────────────────────────────────────────────────────
+const staffSchema = new Schema(
+  {
+    tenantId:   { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
+    name:       { type: String, required: true },
+    photo:      { type: String, default: '' },
+    serviceIds: [{ type: Schema.Types.ObjectId }],
+    active:     { type: Boolean, default: true },
+    order:      { type: Number, default: 0 },
+  },
+  { timestamps: true, versionKey: false }
+);
+staffSchema.set('toJSON', { virtuals: true, transform: (_, r) => { delete r._id; return r; } });
+
 const Tenant      = models.Tenant      || model('Tenant',      tenantSchema);
 const User        = models.User        || model('User',        userSchema);
 const Config      = models.Config      || model('Config',      configSchema);
 const Appointment = models.Appointment || model('Appointment', appointmentSchema);
 const Service     = models.Service     || model('Service',     serviceSchema);
+const Staff       = models.Staff       || model('Staff',       staffSchema);
 
-module.exports = { Tenant, User, Config, Appointment, Service };
+module.exports = { Tenant, User, Config, Appointment, Service, Staff };

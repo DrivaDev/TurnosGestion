@@ -2,6 +2,42 @@ import { useEffect, useState } from 'react';
 import { Save, Loader2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../api';
 
+function TimePicker({ value, onChange }) {
+  const parts = (value || '09:00').split(':');
+  const h = parseInt(parts[0], 10) || 0;
+  const m = parseInt(parts[1], 10) || 0;
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const h12  = h % 12 || 12;
+
+  function setHour(newH12, newAmpm) {
+    let h24 = newH12 % 12;
+    if (newAmpm === 'PM') h24 += 12;
+    onChange(`${String(h24).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+  }
+  function setMinute(newM) {
+    onChange(`${String(h).padStart(2,'0')}:${String(newM).padStart(2,'0')}`);
+  }
+  function setAmpm(newAmpm) { setHour(h12, newAmpm); }
+
+  const selectCls = 'border border-stone-200 rounded-lg px-2 py-1.5 text-sm font-medium bg-white text-stone-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-300';
+
+  return (
+    <div className="flex items-center gap-1">
+      <select value={h12} onChange={e => setHour(Number(e.target.value), ampm)} className={selectCls}>
+        {Array.from({length:12},(_,i)=>i+1).map(n => <option key={n} value={n}>{String(n).padStart(2,'0')}</option>)}
+      </select>
+      <span className="text-stone-400 font-bold text-sm">:</span>
+      <select value={m} onChange={e => setMinute(Number(e.target.value))} className={selectCls}>
+        {[0,15,30,45].map(n => <option key={n} value={n}>{String(n).padStart(2,'0')}</option>)}
+      </select>
+      <select value={ampm} onChange={e => setAmpm(e.target.value)} className={selectCls}>
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  );
+}
+
 const DAYS = [
   { key: 'lunes',     label: 'Lunes' },
   { key: 'martes',    label: 'Martes' },
@@ -136,15 +172,11 @@ export default function Schedule() {
                   <>
                     <div className="flex items-center gap-2 text-sm">
                       <label className="text-gray-500">Desde</label>
-                      <input type="time" className="input w-28"
-                        value={d.start || '09:00'}
-                        onChange={e => updateDay(key, 'start', e.target.value)} />
+                      <TimePicker value={d.start || '09:00'} onChange={v => updateDay(key, 'start', v)} />
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <label className="text-gray-500">Hasta</label>
-                      <input type="time" className="input w-28"
-                        value={d.end || '18:00'}
-                        onChange={e => updateDay(key, 'end', e.target.value)} />
+                      <TimePicker value={d.end || '18:00'} onChange={v => updateDay(key, 'end', v)} />
                     </div>
 
                   </>

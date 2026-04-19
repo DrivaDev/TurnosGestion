@@ -1,6 +1,6 @@
 const express = require('express');
 const router  = express.Router();
-const { Tenant, Service, Appointment } = require('../db/models');
+const { Tenant, Service, Appointment, Staff } = require('../db/models');
 const db = require('../database');
 const { sendConfirmation } = require('../services/whatsapp');
 
@@ -25,6 +25,23 @@ function tenantStatus(tenant) {
   if (!tenant.approved) return { ok: false, status: 503, error: 'pending', message: 'Este negocio aún no ha sido activado.' };
   return { ok: true };
 }
+
+// GET /api/public/:slug/staff?serviceId=X — staff disponibles para un servicio
+router.get('/:slug/staff', async (req, res) => {
+  try {
+    const tenant = await Tenant.findOne({ slug: req.params.slug });
+    const check = tenantStatus(tenant);
+    if (!check.ok) return res.status(check.status).json({ error: check.error });
+
+    const { serviceId } = req.query;
+    const query = { tenantId: tenant._id, active: true };
+    if (serviceId && serviceId !== 'undefined' && serviceId !== 'null') {
+      query.serviceIds = serviceId;
+    }
+    const docs = await Staff.find(query).sort({ order: 1, createdAt: 1 }).lean();
+    res.json(docs.map(s => ({ ...s, id: s._id.toString(), _id: undefined })));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // GET /api/public/:slug — info del negocio para la página de reservas
 router.get('/:slug', async (req, res) => {
@@ -90,9 +107,11 @@ router.get('/:slug/slots', async (req, res) => {
     // All possible start times (every slotDuration minutes)
     const allSlots = generateSlots(dayConfig.start, dayConfig.end, slotDuration);
 
-    // Get all taken appointments for that day to check consecutive slot availability
+    // Filter appointments by staffId if provided (each staff member has independent slots)
+    const { staffId } = req.query;
+    const staffFilter = (staffId && staffId !== 'undefined' && staffId !== 'null') ? { staffId } : {};
     const taken = await Appointment.find({
-      tenantId: tid, date, status: { $ne: 'cancelado' },
+      tenantId: tid, date, status: { $ne: 'cancelado' }, ...staffFilter,
     }).lean();
     const takenTimes = new Set();
     for (const a of taken) {
@@ -136,7 +155,7 @@ router.post('/:slug/book', async (req, res) => {
     if (!check.ok) return res.status(check.status).json({ error: check.error });
 
     const tid = tenant._id;
-    const { name, phone, date, time, notes, serviceId } = req.body;
+    const { name, phone, date, time, notes, serviceId, staffId } = req.body;
     if (!name || !phone || !date || !time)
       return res.status(400).json({ error: 'Faltan campos requeridos' });
 
@@ -146,28 +165,35 @@ router.post('/:slug/book', async (req, res) => {
 
     // Resolve service
     let serviceName = null, durationMin = null;
-    if (serviceId) {
-      const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
-      if (svc) { serviceName = svc.name; durationMin = svc.durationMin; }
+    if (serviceId && serviceId !== 'undefined') {
+      try {
+        const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
+        if (svc) { serviceName = svc.name; durationMin = svc.durationMin; }
+      } catch (_) {}
     }
 
-    // Check all required slots are free
-    const settings  = await db.getAllSettings(tid);
-    const schedule  = JSON.parse(settings.schedule || '{}');
-    const dayKey    = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][new Date(`${date}T12:00:00`).getDay()];
+    // Resolve staff
+    let resolvedStaffId = null, staffName = null;
+    if (staffId && staffId !== 'undefined') {
+      try {
+        const sf = await Staff.findOne({ _id: staffId, tenantId: tid, active: true });
+        if (sf) { resolvedStaffId = sf._id; staffName = sf.name; }
+      } catch (_) {}
+    }
+
+    // Check all required slots are free (per staff if specified)
     const slotDuration = 15;
     const blocksNeeded = durationMin ? Math.ceil(durationMin / slotDuration) : 1;
-
     const [h, m] = time.split(':').map(Number);
     const startMin = h * 60 + m;
     for (let i = 0; i < blocksNeeded; i++) {
       const blockMin  = startMin + i * slotDuration;
       const blockTime = `${String(Math.floor(blockMin / 60)).padStart(2,'0')}:${String(blockMin % 60).padStart(2,'0')}`;
-      if (await db.isSlotTaken(tid, date, blockTime))
+      if (await db.isSlotTaken(tid, date, blockTime, null, resolvedStaffId))
         return res.status(409).json({ error: 'Este horario ya fue reservado. Por favor elegí otro.' });
     }
 
-    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, date, time, notes, serviceName, durationMin, source: 'web' });
+    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, date, time, notes, serviceName, durationMin, staffId: resolvedStaffId, staffName, source: 'web' });
     const whatsapp = await sendConfirmation(tid, apt);
 
     res.status(201).json({

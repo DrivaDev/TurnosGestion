@@ -4,7 +4,7 @@ import { tenantConfigs } from '../tenantConfigs';
 import DrivaDevBooking from './tenants/DrivaDevBooking';
 import {
   CalendarDays, Clock, User, Phone, CheckCircle,
-  ChevronLeft, ChevronRight, Loader2, MessageSquare, LayoutGrid, DollarSign,
+  ChevronLeft, ChevronRight, Loader2, MessageSquare, LayoutGrid, DollarSign, Users,
 } from 'lucide-react';
 
 const CUSTOM_PAGES = { 'driva-dev': DrivaDevBooking };
@@ -48,8 +48,11 @@ export default function BookingPage() {
   const [notFound, setNotFound]         = useState(false);
   const [unavailable, setUnavailable]   = useState(null);
 
-  const [step, setStep]                 = useState('service'); // service→date→time→form→success
+  const [step, setStep]                 = useState('service'); // service→staff→date→time→form→success
   const [selectedService, setSelectedService] = useState(null);
+  const [selectedStaff, setSelectedStaff]     = useState(null);
+  const [staffList, setStaffList]             = useState([]);
+  const [loadingStaff, setLoadingStaff]       = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [slots, setSlots]               = useState([]);
@@ -75,7 +78,6 @@ export default function BookingPage() {
       .then(d => {
         if (!d) return;
         setBusiness(d);
-        // Skip service step if no services configured
         if (!d.services || d.services.length === 0) setStep('date');
       })
       .catch(() => setNotFound(true));
@@ -87,14 +89,33 @@ export default function BookingPage() {
     return () => { document.title = 'TurnosGestion'; };
   }, [business]);
 
+  async function handleServiceSelect(svc) {
+    setSelectedService(svc);
+    setSelectedStaff(null);
+    setSelectedDate('');
+    setSelectedTime('');
+    // Load staff for this service
+    setLoadingStaff(true);
+    try {
+      const res = await fetch(`${BASE}/${slug}/staff?serviceId=${svc.id}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [];
+      setStaffList(list);
+      // Skip staff step if no staff configured
+      setStep(list.length > 0 ? 'staff' : 'date');
+    } catch { setStaffList([]); setStep('date'); }
+    finally { setLoadingStaff(false); }
+  }
+
   async function handleDateSelect(dateStr) {
     setSelectedDate(dateStr);
     setSelectedTime('');
     setLoadingSlots(true);
     setStep('time');
     const serviceParam = selectedService ? `&serviceId=${selectedService.id}` : '';
+    const staffParam   = selectedStaff   ? `&staffId=${selectedStaff.id}`     : '';
     try {
-      const res = await fetch(`${BASE}/${slug}/slots?date=${dateStr}${serviceParam}`);
+      const res = await fetch(`${BASE}/${slug}/slots?date=${dateStr}${serviceParam}${staffParam}`);
       const data = await res.json();
       setSlots(data.slots || []);
     } catch { setSlots([]); }
@@ -117,6 +138,7 @@ export default function BookingPage() {
           date: selectedDate,
           time: selectedTime,
           serviceId: selectedService?.id ?? null,
+          staffId:   selectedStaff?.id   ?? null,
         }),
       });
       const data = await res.json();
@@ -136,8 +158,8 @@ export default function BookingPage() {
   }
 
   function resetToService() {
-    setSelectedService(null); setSelectedDate(''); setSelectedTime('');
-    setForm({ name:'', phone:'', notes:'' });
+    setSelectedService(null); setSelectedStaff(null); setSelectedDate(''); setSelectedTime('');
+    setStaffList([]); setForm({ name:'', phone:'', notes:'' });
     setStep(business?.services?.length > 0 ? 'service' : 'date');
   }
 
@@ -183,11 +205,12 @@ export default function BookingPage() {
   };
 
   const hasServices = business.services?.length > 0;
+  const hasStaff    = staffList.length > 0;
   const STEPS = hasServices
-    ? ['service','date','time','form']
+    ? (hasStaff ? ['service','staff','date','time','form'] : ['service','date','time','form'])
     : ['date','time','form'];
-  const stepLabels = { service: 'Servicio', date: 'Fecha', time: 'Horario', form: 'Datos' };
-  const stepIcons  = { service: LayoutGrid, date: CalendarDays, time: Clock, form: User };
+  const stepLabels = { service: 'Servicio', staff: 'Profesional', date: 'Fecha', time: 'Horario', form: 'Datos' };
+  const stepIcons  = { service: LayoutGrid, staff: Users, date: CalendarDays, time: Clock, form: User };
 
   const today = todayISO();
   const firstDay   = new Date(calDate.year, calDate.month, 1).getDay();
@@ -255,7 +278,7 @@ export default function BookingPage() {
               {business.services.map(svc => (
                 <button
                   key={svc.id}
-                  onClick={() => { setSelectedService(svc); setStep('date'); }}
+                  onClick={() => handleServiceSelect(svc)}
                   className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all hover:shadow-sm"
                   style={{ borderColor: theme.accent }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = theme.primary; e.currentTarget.style.background = theme.accent + '40'; }}
@@ -285,19 +308,67 @@ export default function BookingPage() {
           </div>
         )}
 
-        {/* ── Step: Date ── */}
-        {step === 'date' && (
+        {/* ── Step: Staff ── */}
+        {step === 'staff' && (
           <div className="space-y-4">
-            {hasServices && (
-              <button onClick={() => setStep('service')} className="flex items-center gap-1 text-sm font-medium hover:underline" style={{ color: theme.primary }}>
-                <ChevronLeft size={16} /> Cambiar servicio
-              </button>
-            )}
+            <button onClick={() => setStep('service')} className="flex items-center gap-1 text-sm font-medium hover:underline" style={{ color: theme.primary }}>
+              <ChevronLeft size={16} /> Cambiar servicio
+            </button>
             {selectedService && (
               <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm" style={{ background: theme.accent }}>
                 <LayoutGrid size={14} style={{ color: theme.secondary }} />
                 <span className="font-semibold" style={{ color: theme.secondary }}>{selectedService.name}</span>
-                <span className="text-stone-500 text-xs">· {formatDuration(selectedService.durationMin)}</span>
+              </div>
+            )}
+            <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: theme.accent }}>
+              <h2 className="text-lg font-bold mb-4" style={{ color: theme.secondary }}>¿Con quién querés reservar?</h2>
+              {loadingStaff ? (
+                <div className="flex justify-center py-8"><Loader2 size={24} className="animate-spin" style={{ color: theme.primary }} /></div>
+              ) : (
+                <div className="space-y-2">
+                  {staffList.map(sf => (
+                    <button key={sf.id}
+                      onClick={() => { setSelectedStaff(sf); setStep('date'); }}
+                      className="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all hover:shadow-sm"
+                      style={{ borderColor: theme.accent }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = theme.primary; e.currentTarget.style.background = theme.accent + '40'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = theme.accent; e.currentTarget.style.background = ''; }}
+                    >
+                      {sf.photo
+                        ? <img src={sf.photo} alt={sf.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+                        : <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-bold text-white text-base"
+                            style={{ background: `linear-gradient(135deg,${theme.primary},${theme.secondary})` }}>
+                            {sf.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+                          </div>
+                      }
+                      <div className="flex-1">
+                        <p className="font-bold text-stone-800">{sf.name}</p>
+                      </div>
+                      <ChevronRight size={18} style={{ color: theme.primary }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Step: Date ── */}
+        {step === 'date' && (
+          <div className="space-y-4">
+            {hasStaff && selectedStaff ? (
+              <button onClick={() => setStep('staff')} className="flex items-center gap-1 text-sm font-medium hover:underline" style={{ color: theme.primary }}>
+                <ChevronLeft size={16} /> Cambiar profesional
+              </button>
+            ) : hasServices ? (
+              <button onClick={() => setStep('service')} className="flex items-center gap-1 text-sm font-medium hover:underline" style={{ color: theme.primary }}>
+                <ChevronLeft size={16} /> Cambiar servicio
+              </button>
+            ) : null}
+            {(selectedService || selectedStaff) && (
+              <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm flex-wrap" style={{ background: theme.accent }}>
+                {selectedService && <><LayoutGrid size={14} style={{ color: theme.secondary }} /><span className="font-semibold" style={{ color: theme.secondary }}>{selectedService.name}</span><span className="text-stone-500 text-xs">· {formatDuration(selectedService.durationMin)}</span></>}
+                {selectedStaff && <><Users size={14} style={{ color: theme.secondary }} /><span className="font-semibold" style={{ color: theme.secondary }}>{selectedStaff.name}</span></>}
               </div>
             )}
             <div className="bg-white rounded-2xl shadow-sm border p-5" style={{ borderColor: theme.accent }}>
@@ -384,6 +455,12 @@ export default function BookingPage() {
                   <span className="font-bold" style={{ color: theme.secondary }}>{selectedService.name}</span>
                   <span className="text-stone-500 text-xs">· {formatDuration(selectedService.durationMin)}</span>
                   {selectedService.price != null && <span className="text-stone-500 text-xs">· ${Number(selectedService.price).toLocaleString('es-AR')}</span>}
+                </div>
+              )}
+              {selectedStaff && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Users size={14} style={{ color: theme.secondary }} />
+                  <span className="font-bold" style={{ color: theme.secondary }}>{selectedStaff.name}</span>
                 </div>
               )}
               <div className="flex items-center gap-2 text-sm">

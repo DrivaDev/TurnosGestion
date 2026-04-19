@@ -79,8 +79,8 @@ async function getAppointment(tenantId, id) {
   return Appointment.findOne({ _id: id, tenantId }).lean({ virtuals: true });
 }
 
-async function createAppointment(tenantId, { name, phone, date, time, notes, serviceName, durationMin, source = 'admin' }) {
-  const apt = await Appointment.create({ tenantId, name, phone, date, time, notes, serviceName, durationMin, source });
+async function createAppointment(tenantId, { name, phone, date, time, notes, serviceName, durationMin, staffId, staffName, source = 'admin' }) {
+  const apt = await Appointment.create({ tenantId, name, phone, date, time, notes, serviceName, durationMin, staffId: staffId || null, staffName: staffName || null, source });
   return apt.toJSON();
 }
 
@@ -93,9 +93,10 @@ async function deleteAppointment(tenantId, id) {
   await Appointment.findOneAndDelete({ _id: id, tenantId });
 }
 
-async function isSlotTaken(tenantId, date, time, excludeId = null) {
+async function isSlotTaken(tenantId, date, time, excludeId = null, staffId = null) {
   const q = { tenantId, date, time, status: { $ne: 'cancelado' } };
   if (excludeId) q._id = { $ne: excludeId };
+  if (staffId)   q.staffId = staffId;
   return !!(await Appointment.exists(q));
 }
 

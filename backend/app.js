@@ -11,6 +11,7 @@ const servicesRouter     = require('./routes/services');
 const scheduleRouter     = require('./routes/schedule');
 const settingsRouter     = require('./routes/settings');
 const cronRouter         = require('./routes/cron');
+const staffRouter        = require('./routes/staff');
 const superadminMw       = require('./middleware/superadmin');
 
 const app = express();
@@ -40,5 +41,6 @@ app.use('/api/appointments', auth, appointmentsRouter);
 app.use('/api/services',    auth, servicesRouter);
 app.use('/api/schedule',     auth, scheduleRouter);
 app.use('/api/settings',     auth, settingsRouter);
+app.use('/api/staff',        auth, staffRouter);
 
 module.exports = app;
