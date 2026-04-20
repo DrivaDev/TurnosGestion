@@ -25,7 +25,7 @@ export default function Navbar() {
           <CalendarDays className="text-white" size={22} />
           <div>
             <span className="font-bold text-white text-lg leading-none">
-              {user?.businessName || 'Gestor de Turnos'}
+              {user?.businessName || 'Turnly'}
             </span>
           </div>
         </div>

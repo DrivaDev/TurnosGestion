@@ -153,16 +153,14 @@ export default function Settings() {
           </div>
 
           <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-800 space-y-2">
-            <p className="font-medium">Cómo obtener la contraseña de aplicación en Gmail:</p>
+            <p className="font-medium">Paso a paso para configurar Gmail:</p>
             <ol className="list-decimal list-inside space-y-1.5 text-blue-700">
-              <li>Entrá a <strong>myaccount.google.com</strong> con el Gmail del negocio</li>
-              <li>Andá a <strong>Seguridad</strong> (en el menú de la izquierda)</li>
-              <li>Activá la <strong>Verificación en 2 pasos</strong> si todavía no la tenés</li>
-              <li>Volvé a Seguridad y buscá <strong>"Contraseñas de aplicación"</strong></li>
-              <li>En "Seleccionar app" elegí <strong>Correo</strong>, y en dispositivo <strong>Otra</strong> → escribí "TurnosGestion"</li>
+              <li>Activá la verificación en 2 pasos: <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="underline font-semibold">myaccount.google.com/security</a></li>
+              <li>Una vez activada, entrá directo a: <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="underline font-semibold">myaccount.google.com/apppasswords</a></li>
+              <li>En el campo "Nombre de app" escribí <strong>Turnly</strong> y hacé clic en <strong>Crear</strong></li>
               <li>Copiá la contraseña de 16 caracteres que aparece y pegala abajo</li>
             </ol>
-            <p className="text-blue-600 font-medium">⚠️ Usá una contraseña de aplicación, NO tu contraseña normal de Gmail.</p>
+            <p className="text-blue-600 font-medium mt-1">⚠️ Si no ves "myaccount.google.com/apppasswords", primero activá la verificación en 2 pasos.</p>
           </div>
 
           <div>

@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, Loader2, CheckCircle2, XCircle, ExternalLink,
-  CalendarDays, TrendingUp, Edit2, Save, X, StickyNote, Trash2,
-  Clock, Users, Mail, Crown, Star, DollarSign, AlertTriangle,
+  Edit2, Save, X, StickyNote, Trash2, Clock, AlertTriangle, Crown, Star,
 } from 'lucide-react';
 
 function adminReq(method, path, body) {
@@ -20,77 +19,33 @@ function adminReq(method, path, body) {
   });
 }
 
-function PlanBadge({ plan }) {
-  return plan === 'pro'
-    ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-purple-900/40 text-purple-300 border border-purple-700/40"><Crown size={10} /> Pro</span>
-    : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-900/40 text-blue-300 border border-blue-700/40"><Star size={10} /> Basic</span>;
-}
-
-function PayBadge({ isPaid, paidUntil }) {
-  if (isPaid) return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-900/40 text-green-400 border border-green-700/40">
-      <CheckCircle2 size={12} /> Pago al día
-    </span>
-  );
-  return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-900/40 text-red-400 border border-red-700/40">
-      <XCircle size={12} /> {paidUntil ? 'Vencido' : 'Sin pago'}
-    </span>
-  );
-}
-
-function EditModal({ tenant, onClose, onSave }) {
-  const [form, setForm] = useState({
-    paidUntil: tenant.paidUntil ? new Date(tenant.paidUntil).toISOString().slice(0, 10) : '',
-    notes:     tenant.notes || '',
-    active:    tenant.active,
-    approved:  tenant.approved,
-    plan:      tenant.plan || 'basic',
-  });
+function NotesModal({ tenant, onClose, onSave }) {
+  const [plan, setPlan]   = useState(tenant.plan || 'basic');
+  const [notes, setNotes] = useState(tenant.notes || '');
   const [saving, setSaving] = useState(false);
-  const [markingPaid, setMarkingPaid] = useState(false);
 
   async function handleSave() {
     setSaving(true);
-    try { await onSave(tenant.id, form); onClose(); }
+    try { await onSave(tenant.id, { plan, notes }); onClose(); }
     catch (err) { alert(err.message); }
     finally { setSaving(false); }
   }
 
-  async function handleMarkPaid() {
-    setMarkingPaid(true);
-    try { await onSave(tenant.id, { markPaidThisMonth: true }); onClose(); }
-    catch (err) { alert(err.message); }
-    finally { setMarkingPaid(false); }
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.7)' }}>
-      <div className="w-full max-w-md rounded-2xl border border-white/10 p-6 space-y-5 my-4" style={{ background: '#27211e' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
+      <div className="w-full max-w-sm rounded-2xl border border-white/10 p-6 space-y-4" style={{ background: '#27211e' }}>
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-bold text-white text-lg">{tenant.name}</h2>
-            {tenant.adminEmail && <p className="text-xs text-white/40 mt-0.5">{tenant.adminEmail}</p>}
-          </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white"><X size={20} /></button>
+          <h2 className="font-bold text-white">{tenant.name}</h2>
+          <button onClick={onClose} className="text-white/40 hover:text-white"><X size={18} /></button>
         </div>
 
-        {/* Mark paid quick button */}
-        <button onClick={handleMarkPaid} disabled={markingPaid}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm text-white transition-colors"
-          style={{ background: 'linear-gradient(135deg,#16a34a,#15803d)' }}>
-          {markingPaid ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
-          ✓ Marcar pago del mes actual
-        </button>
-
-        {/* Plan */}
         <div>
-          <label className="block text-xs font-semibold text-white/60 mb-1.5 uppercase tracking-wider">Plan</label>
+          <label className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">Plan</label>
           <div className="flex gap-2">
-            {['basic', 'pro'].map(p => (
-              <button key={p} type="button" onClick={() => setForm(f => ({ ...f, plan: p }))}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors capitalize ${
-                  form.plan === p ? 'border-orange-500 text-orange-400 bg-orange-900/20' : 'border-white/20 text-white/50 hover:text-white'
+            {['basic','pro'].map(p => (
+              <button key={p} type="button" onClick={() => setPlan(p)}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                  plan === p ? 'border-orange-500 text-orange-400 bg-orange-900/20' : 'border-white/20 text-white/40 hover:text-white'
                 }`}>
                 {p === 'pro' ? '⚡ Pro' : '★ Basic'}
               </button>
@@ -98,47 +53,19 @@ function EditModal({ tenant, onClose, onSave }) {
           </div>
         </div>
 
-        {/* Pago hasta */}
         <div>
-          <label className="block text-xs font-semibold text-white/60 mb-1.5 uppercase tracking-wider">Pago hasta (fecha manual)</label>
-          <input type="date" value={form.paidUntil}
-            onChange={e => setForm(f => ({ ...f, paidUntil: e.target.value }))}
-            className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500" />
-          <p className="text-xs text-white/30 mt-1">Dejá vacío si no pagó.</p>
+          <label className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">Notas internas</label>
+          <textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)}
+            placeholder="Contacto, acuerdos, pendientes..."
+            className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2 text-sm focus:outline-none focus:border-orange-500 resize-none" />
         </div>
 
-        {/* Notes */}
-        <div>
-          <label className="block text-xs font-semibold text-white/60 mb-1.5 uppercase tracking-wider">Notas internas</label>
-          <textarea rows={3} value={form.notes}
-            onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-            placeholder="Acordado mensual, pendiente de..., etc."
-            className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500 resize-none" />
-        </div>
-
-        {/* Toggles */}
-        {[
-          { key: 'approved', label: 'Aprobado (puede recibir turnos)' },
-          { key: 'active',   label: 'Activo (visible al público)' },
-        ].map(({ key, label }) => (
-          <div key={key} className="flex items-center gap-3">
-            <label className="text-sm text-white/70 font-medium flex-1">{label}</label>
-            <button onClick={() => setForm(f => ({ ...f, [key]: !f[key] }))}
-              className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${form[key] ? 'bg-orange-600' : 'bg-white/20'}`}>
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${form[key] ? 'left-5' : 'left-0.5'}`} />
-            </button>
-          </div>
-        ))}
-
-        <div className="flex gap-3 pt-1">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white/60 hover:text-white text-sm font-semibold transition-colors">
-            Cancelar
-          </button>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white/50 text-sm font-semibold">Cancelar</button>
           <button onClick={handleSave} disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm text-white"
             style={{ background: '#EA580C' }}>
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            Guardar
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Guardar
           </button>
         </div>
       </div>
@@ -146,15 +73,14 @@ function EditModal({ tenant, onClose, onSave }) {
   );
 }
 
-function StatPill({ icon: Icon, value, label, color }) {
-  return (
-    <div className="flex items-center gap-1.5 text-xs" style={{ color }}>
-      <Icon size={12} />
-      <span className="font-semibold">{value}</span>
-      <span className="text-white/30">{label}</span>
-    </div>
-  );
-}
+const FILTER_OPTS = [
+  { value: 'all',     label: 'Todos' },
+  { value: 'paid',    label: 'Pagados' },
+  { value: 'unpaid',  label: 'Sin pago' },
+  { value: 'basic',   label: 'Plan Basic' },
+  { value: 'pro',     label: 'Plan Pro' },
+  { value: 'pending', label: 'Sin aprobar' },
+];
 
 export default function SuperAdmin() {
   const [tenants, setTenants] = useState([]);
@@ -162,12 +88,11 @@ export default function SuperAdmin() {
   const [editing, setEditing] = useState(null);
   const [toast, setToast]     = useState(null);
   const [search, setSearch]   = useState('');
+  const [filter, setFilter]   = useState('all');
+  const [toggling, setToggling] = useState(null);
   const navigate = useNavigate();
 
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
   async function load() {
     const data = await adminReq('GET', '/tenants');
@@ -185,12 +110,29 @@ export default function SuperAdmin() {
     showToast('Cambios guardados');
   }
 
-  async function handleDelete(tenant) {
-    if (!window.confirm(`¿Eliminar "${tenant.name}" y todos sus datos? Esta acción no se puede deshacer.`)) return;
+  async function togglePaid(t) {
+    setToggling(t.id);
     try {
-      await adminReq('DELETE', `/tenants/${tenant.id}`);
+      if (t.isPaid) {
+        // Remove payment
+        await adminReq('PUT', `/tenants/${t.id}`, { paidUntil: '' });
+        showToast(`${t.name} marcado como no pago`);
+      } else {
+        // Mark paid this month
+        await adminReq('PUT', `/tenants/${t.id}`, { markPaidThisMonth: true, approved: true });
+        showToast(`${t.name} marcado como pago ✓`);
+      }
       await load();
-      showToast(`"${tenant.name}" eliminado`);
+    } catch (err) { showToast(err.message, 'error'); }
+    finally { setToggling(null); }
+  }
+
+  async function handleDelete(t) {
+    if (!window.confirm(`¿Eliminar "${t.name}" y todos sus datos?`)) return;
+    try {
+      await adminReq('DELETE', `/tenants/${t.id}`);
+      await load();
+      showToast(`"${t.name}" eliminado`);
     } catch (err) { showToast(err.message, 'error'); }
   }
 
@@ -202,11 +144,18 @@ export default function SuperAdmin() {
   const unpaid  = tenants.length - paid;
   const pending = tenants.filter(t => !t.approved).length;
   const totalMonth = tenants.reduce((s, t) => s + t.stats.thisMonth, 0);
-  const proCount = tenants.filter(t => t.plan === 'pro').length;
 
-  const filtered = tenants.filter(t =>
-    !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.adminEmail?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = tenants.filter(t => {
+    const matchSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.adminEmail?.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === 'all' ? true
+      : filter === 'paid'    ? t.isPaid
+      : filter === 'unpaid'  ? !t.isPaid
+      : filter === 'basic'   ? t.plan === 'basic'
+      : filter === 'pro'     ? t.plan === 'pro'
+      : filter === 'pending' ? !t.approved
+      : true;
+    return matchSearch && matchFilter;
+  });
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#1C1917' }}>
@@ -218,151 +167,139 @@ export default function SuperAdmin() {
     <div className="min-h-screen" style={{ background: '#1C1917' }}>
       <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ShieldCheck size={22} style={{ color: '#EA580C' }} />
-          <span className="font-bold text-white text-lg">Panel Driva Dev</span>
+          <ShieldCheck size={20} style={{ color: '#EA580C' }} />
+          <span className="font-bold text-white">Panel Driva Dev</span>
         </div>
-        <button onClick={logout} className="text-sm text-white/50 hover:text-white transition-colors">
-          Cerrar sesión
-        </button>
+        <button onClick={logout} className="text-sm text-white/50 hover:text-white">Salir</button>
       </header>
 
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium ${
-          toast.type === 'error' ? 'bg-red-600' : 'bg-green-600'
-        }`}>{toast.msg}</div>
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium ${toast.type === 'error' ? 'bg-red-600' : 'bg-green-600'}`}>
+          {toast.msg}
+        </div>
       )}
 
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
         {/* Alerts */}
         {pending > 0 && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium" style={{ background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.3)', color: '#F97316' }}>
-            <Clock size={16} className="shrink-0" />
-            {pending} negocio{pending !== 1 ? 's' : ''} pendiente{pending !== 1 ? 's' : ''} de aprobación.
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium" style={{ background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.3)', color: '#F97316' }}>
+            <Clock size={14} /> {pending} negocio{pending !== 1 ? 's' : ''} pendiente{pending !== 1 ? 's' : ''} de aprobación (se aprueba automáticamente al marcar pago).
           </div>
         )}
         {unpaid > 0 && dayOfMonth >= 1 && dayOfMonth < 10 && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
-            <AlertTriangle size={16} className="shrink-0" />
-            {unpaid} negocio{unpaid !== 1 ? 's' : ''} sin pago este mes. Tienen hasta el día 10 para pagar o se desactivan automáticamente.
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
+            <AlertTriangle size={14} /> {unpaid} sin pago · Se desactivan automáticamente el día 10.
           </div>
         )}
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {/* Summary */}
+        <div className="grid grid-cols-4 gap-2">
           {[
-            { label: 'Total negocios', value: tenants.length,   color: '#EA580C' },
-            { label: 'Pagos al día',   value: paid,             color: '#22c55e' },
-            { label: 'Sin pago',       value: unpaid,           color: '#ef4444' },
-            { label: 'Plan Pro',       value: proCount,         color: '#a855f7' },
-            { label: 'Turnos este mes',value: totalMonth,       color: '#60a5fa' },
+            { label: 'Total', value: tenants.length, color: '#EA580C' },
+            { label: 'Pagados', value: paid, color: '#22c55e' },
+            { label: 'Sin pago', value: unpaid, color: '#ef4444' },
+            { label: 'Turnos/mes', value: totalMonth, color: '#60a5fa' },
           ].map(({ label, value, color }) => (
-            <div key={label} className="rounded-2xl border border-white/10 p-4" style={{ background: '#27211e' }}>
-              <p className="text-xs text-white/40 mb-1">{label}</p>
-              <p className="text-2xl font-bold" style={{ color }}>{value}</p>
+            <div key={label} className="rounded-xl border border-white/10 p-3 text-center" style={{ background: '#27211e' }}>
+              <p className="text-xs text-white/40 mb-0.5">{label}</p>
+              <p className="text-xl font-bold" style={{ color }}>{value}</p>
             </div>
           ))}
         </div>
 
-        {/* Search */}
-        <input
-          className="w-full rounded-xl border border-white/20 bg-white/5 text-white px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500 placeholder-white/30"
-          placeholder="Buscar por nombre o email..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        {/* Filters */}
+        <div className="flex gap-2 flex-wrap">
+          <input
+            className="flex-1 min-w-40 rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2 text-sm focus:outline-none focus:border-orange-500 placeholder-white/30"
+            placeholder="Buscar por nombre o email..."
+            value={search} onChange={e => setSearch(e.target.value)}
+          />
+          <select
+            className="rounded-xl border border-white/20 bg-white/5 text-white px-3 py-2 text-sm focus:outline-none focus:border-orange-500"
+            value={filter} onChange={e => setFilter(e.target.value)}>
+            {FILTER_OPTS.map(o => <option key={o.value} value={o.value} style={{ background: '#1C1917' }}>{o.label}</option>)}
+          </select>
+        </div>
 
-        {/* Tenant list */}
-        <div className="space-y-3">
+        {/* List */}
+        <div className="rounded-2xl border border-white/10 overflow-hidden" style={{ background: '#27211e' }}>
           {filtered.length === 0 ? (
-            <p className="text-white/40 text-center py-20">No hay negocios registrados aún.</p>
-          ) : filtered.map(t => (
-            <div key={t.id} className={`rounded-2xl border p-5 transition-opacity ${t.active ? 'border-white/10' : 'border-red-900/30 opacity-60'}`}
-              style={{ background: '#27211e' }}>
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="flex-1 min-w-0 space-y-2">
-                  {/* Header */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-white text-base">{t.name}</span>
-                    <PlanBadge plan={t.plan} />
-                    <PayBadge isPaid={t.isPaid} paidUntil={t.paidUntil} />
-                    {!t.approved && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-900/40 text-orange-400 border border-orange-700/40">
-                        <Clock size={10} /> Pendiente
-                      </span>
-                    )}
-                    {!t.active && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-900/40 text-red-400">Inactivo</span>
-                    )}
-                  </div>
+            <p className="text-white/40 text-center py-12 text-sm">No hay negocios que coincidan.</p>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {filtered.map(t => (
+                <div key={t.id} className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5 ${!t.active ? 'opacity-50' : ''}`}>
 
-                  {/* Admin info */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-xs text-white/40 font-mono">/book/{t.slug}</span>
-                    {t.adminEmail && (
-                      <span className="flex items-center gap-1 text-xs text-white/40">
-                        <Mail size={11} /> {t.adminEmail}
-                      </span>
-                    )}
-                    {t.adminName && (
-                      <span className="text-xs text-white/40">{t.adminName}</span>
+                  {/* Pay toggle */}
+                  <button onClick={() => togglePaid(t)} disabled={toggling === t.id}
+                    title={t.isPaid ? 'Quitar pago' : 'Marcar pago del mes'}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all border ${
+                      t.isPaid ? 'bg-green-900/40 border-green-700/60 text-green-400 hover:bg-red-900/40 hover:border-red-700/60 hover:text-red-400'
+                               : 'bg-red-900/30 border-red-800/60 text-red-400 hover:bg-green-900/40 hover:border-green-700/60 hover:text-green-400'
+                    }`}>
+                    {toggling === t.id
+                      ? <Loader2 size={14} className="animate-spin" />
+                      : t.isPaid ? <CheckCircle2 size={16} /> : <XCircle size={16} />
+                    }
+                  </button>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-semibold text-white text-sm">{t.name}</span>
+                      {t.plan === 'pro'
+                        ? <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold bg-purple-900/40 text-purple-300 border border-purple-700/40"><Crown size={9} /> Pro</span>
+                        : <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-blue-900/40 text-blue-300 border border-blue-700/40"><Star size={9} /> Basic</span>
+                      }
+                      {!t.approved && <span className="text-xs px-1.5 py-0.5 rounded-full bg-orange-900/40 text-orange-400 border border-orange-700/40">pendiente</span>}
+                      {!t.active && <span className="text-xs px-1.5 py-0.5 rounded-full bg-red-900/40 text-red-400">inactivo</span>}
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                      {t.adminEmail && <span className="text-xs text-white/35">{t.adminEmail}</span>}
+                      <span className="text-xs text-white/25 font-mono">/book/{t.slug}</span>
+                    </div>
+                    {t.notes && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <StickyNote size={10} className="text-white/25 shrink-0" />
+                        <span className="text-xs text-white/30 truncate">{t.notes}</span>
+                      </div>
                     )}
                   </div>
 
                   {/* Stats */}
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <StatPill icon={CalendarDays} value={t.stats.today}     label="hoy"       color="#60a5fa" />
-                    <StatPill icon={TrendingUp}   value={t.stats.thisMonth} label="este mes"  color="#34d399" />
-                    <StatPill icon={CalendarDays} value={t.stats.total}     label="total"     color="#9ca3af" />
-                    {t.stats.staff > 0 && <StatPill icon={Users} value={t.stats.staff} label="profesionales" color="#a78bfa" />}
+                  <div className="hidden sm:flex flex-col items-end gap-0.5 shrink-0 text-right">
+                    <span className="text-xs text-white/50"><span className="font-semibold text-white/70">{t.stats.thisMonth}</span> este mes</span>
+                    <span className="text-xs text-white/30">{t.stats.total} total</span>
                     {t.paidUntil && (
-                      <span className="text-xs text-white/30">
-                        Pago hasta {new Date(t.paidUntil).toLocaleDateString('es-AR')}
-                      </span>
-                    )}
-                    {t.deactivatedAt && !t.active && (
-                      <span className="text-xs text-red-400/60">
-                        Desactivado {new Date(t.deactivatedAt).toLocaleDateString('es-AR')}
-                      </span>
+                      <span className="text-xs text-white/25">hasta {new Date(t.paidUntil).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>
                     )}
                   </div>
 
-                  {/* Registered */}
-                  <p className="text-xs text-white/25">
-                    Registrado {new Date(t.createdAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </p>
-
-                  {t.notes && (
-                    <div className="flex items-start gap-1.5 text-xs text-white/40">
-                      <StickyNote size={11} className="mt-0.5 shrink-0" />
-                      <span>{t.notes}</span>
-                    </div>
-                  )}
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <a href={`/book/${t.slug}`} target="_blank" rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg border border-white/20 text-white/40 hover:text-white transition-colors">
+                      <ExternalLink size={13} />
+                    </a>
+                    <button onClick={() => setEditing(t)}
+                      className="p-1.5 rounded-lg transition-colors text-white/40 hover:text-orange-400">
+                      <Edit2 size={13} />
+                    </button>
+                    <button onClick={() => handleDelete(t)}
+                      className="p-1.5 rounded-lg text-white/30 hover:text-red-400 transition-colors">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <a href={`/book/${t.slug}`} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-white/20 text-white/60 hover:text-white transition-colors">
-                    <ExternalLink size={13} /> Ver
-                  </a>
-                  <button onClick={() => setEditing(t)}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold text-white transition-colors"
-                    style={{ background: '#EA580C' }}>
-                    <Edit2 size={13} /> Editar
-                  </button>
-                  <button onClick={() => handleDelete(t)}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-red-800/60 text-red-400 hover:bg-red-900/30 transition-colors">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       </div>
 
       {editing && (
-        <EditModal tenant={editing} onClose={() => setEditing(null)} onSave={handleSave} />
+        <NotesModal tenant={editing} onClose={() => setEditing(null)} onSave={handleSave} />
       )}
     </div>
   );

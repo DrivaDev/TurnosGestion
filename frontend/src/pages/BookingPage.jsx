@@ -86,7 +86,7 @@ export default function BookingPage() {
   // Page title
   useEffect(() => {
     if (business) document.title = `Reservas — ${business.businessName}`;
-    return () => { document.title = 'TurnosGestion'; };
+    return () => { document.title = 'Turnly'; };
   }, [business]);
 
   async function handleServiceSelect(svc) {

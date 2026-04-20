@@ -53,7 +53,7 @@ const TESTIMONIALS = [
 const JSON_LD = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'TurnosGestion',
+  name: 'Turnly',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   description: 'Sistema de gestión de turnos online para negocios locales. Página de reservas personalizada, confirmaciones y recordatorios automáticos por WhatsApp.',
@@ -66,7 +66,7 @@ export default function Landing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = 'TurnosGestion — Sistema de turnos online para negocios | Driva Dev';
+    document.title = 'Turnly — Sistema de turnos online para negocios | Driva Dev';
     // Inject JSON-LD
     const script = document.createElement('script');
     script.type = 'application/ld+json';
@@ -98,7 +98,7 @@ export default function Landing() {
           <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)' }}>
             <CalendarDays size={16} className="text-white" />
           </div>
-          <span className="font-bold text-white text-base tracking-tight">TurnosGestion</span>
+          <span className="font-bold text-white text-base tracking-tight">Turnly</span>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/login')} className="text-sm font-medium px-4 py-2 rounded-xl transition-colors" style={{ color: 'rgba(255,255,255,0.6)' }}
@@ -334,8 +334,13 @@ export default function Landing() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Basic */}
           <div className="rounded-3xl p-7 flex flex-col" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)' }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4 self-start" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.12)' }}>
-              Plan Básico
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold self-start" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                Plan Básico
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold self-start" style={{ background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }}>
+                🎁 1er mes gratis
+              </div>
             </div>
             <p className="text-4xl font-extrabold text-white mb-1">$20.000<span className="text-lg font-medium text-white/40">/mes</span></p>
             <p className="text-white/40 text-sm mb-5">Para negocios individuales.</p>
@@ -425,7 +430,7 @@ export default function Landing() {
               <ArrowRight size={18} /> Crear mi cuenta
             </button>
             <a
-              href="https://wa.me/5491139139022?text=Hola!%20Quiero%20saber%20más%20sobre%20TurnosGestion"
+              href="https://wa.me/5491139139022?text=Hola!%20Quiero%20saber%20más%20sobre%20Turnly"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all"
@@ -445,7 +450,7 @@ export default function Landing() {
           <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)' }}>
             <CalendarDays size={12} className="text-white" />
           </div>
-          <span className="font-bold text-white text-sm">TurnosGestion</span>
+          <span className="font-bold text-white text-sm">Turnly</span>
         </div>
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
           Desarrollado por{' '}

@@ -38,7 +38,10 @@ router.get('/:slug/staff', async (req, res) => {
     if (serviceId && serviceId !== 'undefined' && serviceId !== 'null') {
       query.serviceIds = serviceId;
     }
-    const docs = await Staff.find(query).sort({ order: 1, createdAt: 1 }).lean();
+    let docs = await Staff.find(query).sort({ order: 1, createdAt: 1 }).lean();
+    if (docs.length === 0 && serviceId && serviceId !== 'undefined' && serviceId !== 'null') {
+      docs = await Staff.find({ tenantId: tenant._id, active: true }).sort({ order: 1, createdAt: 1 }).lean();
+    }
     res.json(docs.map(s => ({ ...s, id: s._id.toString(), _id: undefined })));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
