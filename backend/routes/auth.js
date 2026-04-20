@@ -47,7 +47,11 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ error: 'Ya existe una cuenta con ese email' });
 
     const slug   = await uniqueSlug(generateSlug(businessName));
-    const tenant = await Tenant.create({ name: businessName, slug });
+    // First month free for basic plan: set paidUntil to end of current month
+    const freeUntil = new Date();
+    freeUntil.setMonth(freeUntil.getMonth() + 1, 0); // Last day of current month
+    freeUntil.setHours(23, 59, 59);
+    const tenant = await Tenant.create({ name: businessName, slug, paidUntil: freeUntil });
     const passwordHash = await bcrypt.hash(password, 12);
     const user   = await User.create({ tenantId: tenant._id, name, email, passwordHash, role: 'admin' });
     await initTenantConfig(tenant._id, businessName);

@@ -13,13 +13,13 @@ const FEATURES = [
   },
   {
     icon: MessageSquare,
-    title: 'Confirmaciones por WhatsApp',
-    desc: 'Cada turno dispara un mensaje automático al cliente. Sin configuración extra de tu parte.',
+    title: 'Confirmaciones por email',
+    desc: 'Cada turno dispara un email automático al cliente con los detalles de su reserva.',
   },
   {
     icon: Clock,
     title: 'Recordatorios automáticos',
-    desc: 'Se manda un recordatorio antes del turno. Menos ausencias, más ingresos.',
+    desc: 'Se envía un recordatorio por email antes del turno. Menos ausencias, más ingresos.',
   },
   {
     icon: BarChart2,
@@ -162,8 +162,8 @@ export default function Landing() {
         <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl mt-8"
           style={{ background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.25)' }}>
           <span className="text-lg">🎁</span>
-          <span className="text-sm font-semibold" style={{ color: '#4ade80' }}>Primer mes completamente gratis</span>
-          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>· luego $20.000/mes</span>
+          <span className="text-sm font-semibold" style={{ color: '#4ade80' }}>Primer mes gratis en el Plan Básico</span>
+          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>· sin tarjeta de crédito</span>
         </div>
 
         {/* Social proof strip */}
@@ -328,7 +328,7 @@ export default function Landing() {
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-24">
         <div className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">Precio simple y claro</h2>
-          <p className="text-white/40 text-lg">Sin sorpresas, sin letras chicas. Primer mes gratis en ambos planes.</p>
+          <p className="text-white/40 text-lg">Sin sorpresas, sin letras chicas. Primer mes gratis en el Plan Básico.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -340,7 +340,7 @@ export default function Landing() {
             <p className="text-4xl font-extrabold text-white mb-1">$20.000<span className="text-lg font-medium text-white/40">/mes</span></p>
             <p className="text-white/40 text-sm mb-5">Para negocios individuales.</p>
             <div className="space-y-2 flex-1">
-              {['Página de reservas personalizada','Panel de gestión completo','Confirmaciones y recordatorios WhatsApp','Diseño 100% personalizado','Soporte por WhatsApp'].map(f => (
+              {['🎁 1er mes completamente gratis','Página de reservas personalizada','Panel de gestión completo','Confirmaciones y recordatorios por email','Diseño 100% personalizado','Soporte por WhatsApp'].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
                   <CheckCircle2 size={14} style={{ color: 'rgba(255,255,255,0.4)' }} className="shrink-0" /> {f}
                 </div>
@@ -362,14 +362,11 @@ export default function Landing() {
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold self-start" style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)', color: '#fff' }}>
                 ⚡ Plan Pro
               </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold self-start" style={{ background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }}>
-                🎁 1er mes gratis
-              </div>
             </div>
             <p className="text-4xl font-extrabold text-white mb-1">$30.000<span className="text-lg font-medium text-white/40">/mes</span></p>
             <p className="text-white/40 text-sm mb-5">Para equipos de hasta 5 profesionales.</p>
             <div className="space-y-2 flex-1">
-              {['Todo lo del plan Básico','Hasta 5 profesionales/usuarios','Cada uno con su propia agenda','El cliente elige con quién reservar','Perfiles editables con foto y servicios','Servicios por profesional'].map(f => (
+              {['Todo lo del Plan Básico','Hasta 5 profesionales/usuarios','Cada uno con su propia agenda','El cliente elige con quién reservar','Perfiles editables con foto y servicios','Servicios por profesional'].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
                   <CheckCircle2 size={14} style={{ color: '#F97316' }} className="shrink-0" /> {f}
                 </div>

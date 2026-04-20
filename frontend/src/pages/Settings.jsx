@@ -152,14 +152,17 @@ export default function Settings() {
             </h2>
           </div>
 
-          <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-800 space-y-1">
-            <p className="font-medium">Configuración con Gmail:</p>
-            <ol className="list-decimal list-inside space-y-1 text-blue-700">
-              <li>Activá la verificación en dos pasos en tu cuenta de Google</li>
-              <li>Andá a <strong>Seguridad → Contraseñas de aplicación</strong></li>
-              <li>Creá una contraseña para "Correo" y copiala abajo</li>
-              <li>Los clientes recibirán los emails desde tu dirección de Gmail</li>
+          <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-800 space-y-2">
+            <p className="font-medium">Cómo obtener la contraseña de aplicación en Gmail:</p>
+            <ol className="list-decimal list-inside space-y-1.5 text-blue-700">
+              <li>Entrá a <strong>myaccount.google.com</strong> con el Gmail del negocio</li>
+              <li>Andá a <strong>Seguridad</strong> (en el menú de la izquierda)</li>
+              <li>Activá la <strong>Verificación en 2 pasos</strong> si todavía no la tenés</li>
+              <li>Volvé a Seguridad y buscá <strong>"Contraseñas de aplicación"</strong></li>
+              <li>En "Seleccionar app" elegí <strong>Correo</strong>, y en dispositivo <strong>Otra</strong> → escribí "TurnosGestion"</li>
+              <li>Copiá la contraseña de 16 caracteres que aparece y pegala abajo</li>
             </ol>
+            <p className="text-blue-600 font-medium">⚠️ Usá una contraseña de aplicación, NO tu contraseña normal de Gmail.</p>
           </div>
 
           <div>
