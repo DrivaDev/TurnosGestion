@@ -5,8 +5,8 @@ const { Service } = require('../db/models');
 // GET /api/services
 router.get('/', async (req, res) => {
   try {
-    const services = await Service.find({ tenantId: req.user.tenantId }).sort({ createdAt: 1 }).lean({ virtuals: true });
-    res.json(services);
+    const services = await Service.find({ tenantId: req.user.tenantId }).sort({ createdAt: 1 }).lean();
+    res.json(services.map(s => ({ ...s, id: s._id.toString(), _id: undefined })));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

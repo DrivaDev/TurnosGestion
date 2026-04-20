@@ -1,8 +1,8 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../database');
-const { sendConfirmation } = require('../services/whatsapp');
-const { Service, Appointment } = require('../db/models');
+const { sendConfirmation } = require('../services/email');
+const { Service, Staff, Appointment } = require('../db/models');
 
 function generateSlots(start, end, durationMin) {
   const slots = [];
@@ -19,35 +19,58 @@ function generateSlots(start, end, durationMin) {
 
 const DAY_KEYS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
 
-// GET /api/appointments/available-slots?date=YYYY-MM-DD
+// GET /api/appointments/available-slots?date=YYYY-MM-DD&serviceId=X&staffId=Y
 router.get('/available-slots', async (req, res) => {
   try {
     const tid = req.user.tenantId;
-    const { date, excludeId } = req.query;
+    const { date, excludeId, serviceId, staffId } = req.query;
     if (!date) return res.status(400).json({ error: 'Falta el parámetro date' });
 
     const blocked = await db.getBlockedDays(tid);
     if (blocked.includes(date)) return res.json({ slots: [], reason: 'día bloqueado' });
 
-    const dayKey    = DAY_KEYS[new Date(`${date}T12:00:00`).getDay()];
-    const schedule  = JSON.parse(await db.getSetting(tid, 'schedule') || '{}');
-    const dayConfig = schedule[dayKey];
+    const dayKey = DAY_KEYS[new Date(`${date}T12:00:00`).getDay()];
+
+    // Resolve schedule: use staff's if provided and configured
+    let dayConfig = null;
+    let staffDaysOff = [];
+    if (staffId && staffId !== 'undefined' && staffId !== 'null') {
+      try {
+        const sf = await Staff.findOne({ _id: staffId, tenantId: tid }).lean();
+        if (sf) {
+          staffDaysOff = sf.daysOff || [];
+          if (sf.schedule) {
+            const sfSchedule = JSON.parse(sf.schedule);
+            if (sfSchedule[dayKey]) dayConfig = sfSchedule[dayKey];
+          }
+        }
+      } catch (_) {}
+    }
+    if (staffDaysOff.includes(date)) return res.json({ slots: [], reason: 'día libre del profesional' });
+
+    if (!dayConfig) {
+      const schedule = JSON.parse(await db.getSetting(tid, 'schedule') || '{}');
+      dayConfig = schedule[dayKey];
+    }
     if (!dayConfig?.enabled) return res.json({ slots: [], reason: 'día no habilitado' });
     if (!dayConfig.start || !dayConfig.end) return res.json({ slots: [], reason: 'horario no configurado' });
 
     const slotDuration = 15;
-
     let serviceDuration = slotDuration;
-    const { serviceId } = req.query;
     if (serviceId && serviceId !== 'undefined' && serviceId !== 'null') {
       try {
         const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
         if (svc) serviceDuration = svc.durationMin;
-      } catch (_) { /* invalid id format, use default */ }
+      } catch (_) {}
     }
 
     const allSlots = generateSlots(dayConfig.start, dayConfig.end, slotDuration);
-    const taken = await Appointment.find({ tenantId: tid, date, status: { $ne: 'cancelado' }, ...(excludeId ? { _id: { $ne: excludeId } } : {}) }).lean();
+    const staffFilter = (staffId && staffId !== 'undefined' && staffId !== 'null') ? { staffId } : {};
+    const taken = await Appointment.find({
+      tenantId: tid, date, status: { $ne: 'cancelado' },
+      ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+      ...staffFilter,
+    }).lean();
     const takenTimes = new Set();
     for (const a of taken) {
       const dur = a.durationMin || slotDuration;
@@ -87,22 +110,32 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const tid = req.user.tenantId;
-    const { name, phone, date, time, notes, serviceId, sendWhatsapp = true } = req.body;
+    const { name, phone, email, date, time, notes, serviceId, staffId, sendEmail: doSend = true } = req.body;
     if (!name || !phone || !date || !time)
       return res.status(400).json({ error: 'Faltan campos: name, phone, date, time' });
 
     let serviceName = null, durationMin = null;
     if (serviceId) {
-      const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
-      if (svc) { serviceName = svc.name; durationMin = svc.durationMin; }
+      try {
+        const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
+        if (svc) { serviceName = svc.name; durationMin = svc.durationMin; }
+      } catch (_) {}
     }
 
-    if (await db.isSlotTaken(tid, date, time))
+    let resolvedStaffId = null, staffName = null;
+    if (staffId) {
+      try {
+        const sf = await Staff.findOne({ _id: staffId, tenantId: tid, active: true });
+        if (sf) { resolvedStaffId = sf._id; staffName = sf.name; }
+      } catch (_) {}
+    }
+
+    if (await db.isSlotTaken(tid, date, time, null, resolvedStaffId))
       return res.status(409).json({ error: 'El horario ya está ocupado' });
 
-    const apt      = await db.createAppointment(tid, { name, phone, date, time, notes, serviceName, durationMin });
-    const whatsapp = sendWhatsapp ? await sendConfirmation(tid, apt) : null;
-    res.status(201).json({ appointment: apt, whatsapp });
+    const apt = await db.createAppointment(tid, { name, phone, email: email || null, date, time, notes, serviceName, durationMin, staffId: resolvedStaffId, staffName });
+    const emailResult = doSend ? await sendConfirmation(tid, apt) : null;
+    res.status(201).json({ appointment: apt, email: emailResult });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -113,18 +146,18 @@ router.put('/:id', async (req, res) => {
     const existing = await db.getAppointment(tid, req.params.id);
     if (!existing) return res.status(404).json({ error: 'Turno no encontrado' });
 
-    const { name, phone, date, time, notes, status, sendWhatsapp } = req.body;
+    const { name, phone, email, date, time, notes, status, sendEmail: doSend } = req.body;
     if (date && time && (date !== existing.date || time !== existing.time)) {
       if (await db.isSlotTaken(tid, date, time, req.params.id))
         return res.status(409).json({ error: 'El horario ya está ocupado' });
     }
-    const updated = await db.updateAppointment(tid, req.params.id, { name, phone, date, time, notes, status });
-    let whatsapp = null;
-    if (sendWhatsapp) {
+    const updated = await db.updateAppointment(tid, req.params.id, { name, phone, email, date, time, notes, status });
+    let emailResult = null;
+    if (doSend) {
       await db.updateAppointment(tid, req.params.id, { confirmation_sent: 0 });
-      whatsapp = await sendConfirmation(tid, await db.getAppointment(tid, req.params.id));
+      emailResult = await sendConfirmation(tid, await db.getAppointment(tid, req.params.id));
     }
-    res.json({ appointment: updated, whatsapp });
+    res.json({ appointment: updated, email: emailResult });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const router  = express.Router();
-const { sendReminders } = require('../services/whatsapp');
+const { sendReminders } = require('../services/email');
 const { Tenant, User, Config, Appointment } = require('../db/models');
 
 async function purgeInactiveTenants() {

@@ -1,6 +1,34 @@
-import { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, Save, X, Loader2, Users } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Plus, Edit2, Trash2, Save, X, Loader2, Users, Camera, Calendar } from 'lucide-react';
 import { api } from '../api';
+
+const DAY_KEYS = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+const DAY_LABELS = { lunes:'Lunes', martes:'Martes', miercoles:'Miércoles', jueves:'Jueves', viernes:'Viernes', sabado:'Sábado', domingo:'Domingo' };
+
+function TimePicker({ value, onChange }) {
+  const [h, m] = (value || '09:00').split(':').map(Number);
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const h12 = h % 12 || 12;
+  function update(nh12, nm, nampm) {
+    let nh = nh12 % 12;
+    if (nampm === 'PM') nh += 12;
+    onChange(`${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`);
+  }
+  return (
+    <div className="flex gap-1 items-center">
+      <select className="input py-1 px-2 text-xs w-14" value={h12} onChange={e => update(+e.target.value, m, ampm)}>
+        {[...Array(12)].map((_,i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+      </select>
+      <span className="text-xs">:</span>
+      <select className="input py-1 px-2 text-xs w-14" value={m} onChange={e => update(h12, +e.target.value, ampm)}>
+        {[0,15,30,45].map(v => <option key={v} value={v}>{String(v).padStart(2,'0')}</option>)}
+      </select>
+      <select className="input py-1 px-2 text-xs w-16" value={ampm} onChange={e => update(h12, m, e.target.value)}>
+        <option>AM</option><option>PM</option>
+      </select>
+    </div>
+  );
+}
 
 function Avatar({ name, photo, size = 10 }) {
   if (photo) return <img src={photo} alt={name} className={`w-${size} h-${size} rounded-full object-cover shrink-0`} />;
@@ -13,15 +41,30 @@ function Avatar({ name, photo, size = 10 }) {
   );
 }
 
+function parseSchedule(scheduleStr) {
+  if (!scheduleStr) {
+    return DAY_KEYS.reduce((acc, k) => ({
+      ...acc,
+      [k]: { enabled: ['lunes','martes','miercoles','jueves','viernes'].includes(k), start: '09:00', end: '18:00' }
+    }), {});
+  }
+  try { return JSON.parse(scheduleStr); } catch { return {}; }
+}
+
 function StaffModal({ member, services, onClose, onSave }) {
+  const [tab, setTab] = useState('info');
   const [form, setForm] = useState({
     name:       member?.name       ?? '',
     photo:      member?.photo      ?? '',
     serviceIds: member?.serviceIds ?? [],
     active:     member?.active     ?? true,
+    daysOff:    member?.daysOff    ?? [],
   });
+  const [schedule, setSchedule] = useState(() => parseSchedule(member?.schedule));
+  const [newDayOff, setNewDayOff] = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState('');
+  const [error, setError] = useState('');
+  const fileRef = useRef();
 
   function toggleService(id) {
     setForm(f => ({
@@ -32,81 +75,199 @@ function StaffModal({ member, services, onClose, onSave }) {
     }));
   }
 
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const canvas = document.createElement('canvas');
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const size = 200;
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(size / img.width, size / img.height);
+      const w = img.width * scale, h = img.height * scale;
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      URL.revokeObjectURL(url);
+      setForm(f => ({ ...f, photo: canvas.toDataURL('image/jpeg', 0.85) }));
+    };
+    img.src = url;
+  }
+
+  function toggleDay(key) {
+    setSchedule(s => ({ ...s, [key]: { ...s[key], enabled: !s[key]?.enabled } }));
+  }
+
+  function setDayTime(key, field, val) {
+    setSchedule(s => ({ ...s, [key]: { ...s[key], [field]: val } }));
+  }
+
+  function addDayOff() {
+    if (!newDayOff) return;
+    if (!form.daysOff.includes(newDayOff)) {
+      setForm(f => ({ ...f, daysOff: [...f.daysOff, newDayOff].sort() }));
+    }
+    setNewDayOff('');
+  }
+
+  function removeDayOff(d) {
+    setForm(f => ({ ...f, daysOff: f.daysOff.filter(x => x !== d) }));
+  }
+
   async function handleSave() {
     if (!form.name.trim()) { setError('El nombre es requerido'); return; }
     setSaving(true);
-    try { await onSave(form); onClose(); }
-    catch (err) { setError(err.message); }
+    try {
+      await onSave({ ...form, schedule: JSON.stringify(schedule) });
+      onClose();
+    } catch (err) { setError(err.message); }
     finally { setSaving(false); }
   }
 
+  const tabs = [{ id: 'info', label: 'Información' }, { id: 'schedule', label: 'Horarios' }];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border" style={{ borderColor: '#FED7AA' }}>
-        <div className="flex items-center justify-between mb-5">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border flex flex-col max-h-[90vh]" style={{ borderColor: '#FED7AA' }}>
+        <div className="flex items-center justify-between p-5 pb-0 shrink-0">
           <h2 className="font-bold text-lg" style={{ color: '#9A3412' }}>
             {member ? 'Editar profesional' : 'Nuevo profesional'}
           </h2>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-600"><X size={20} /></button>
         </div>
 
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>}
+        {/* Tabs */}
+        <div className="flex gap-0 px-5 pt-3 border-b shrink-0">
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${tab === t.id ? 'border-orange-500 text-orange-600' : 'border-transparent text-stone-500 hover:text-stone-700'}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Avatar name={form.name || '?'} photo={form.photo} size={14} />
-            <div className="flex-1">
-              <label className="block text-sm font-semibold mb-1.5 text-stone-700">Nombre *</label>
-              <input className="input" value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Ej: María García" />
-            </div>
-          </div>
+        <div className="overflow-y-auto flex-1 p-5 space-y-4">
+          {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
-          <div>
-            <label className="block text-sm font-semibold mb-1.5 text-stone-700">Foto (URL)</label>
-            <input className="input" value={form.photo}
-              onChange={e => setForm(f => ({ ...f, photo: e.target.value }))}
-              placeholder="https://..." />
-            <p className="text-xs text-stone-400 mt-1">URL de imagen. Si no ponés ninguna, se muestran las iniciales.</p>
-          </div>
-
-          {services.length > 0 && (
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-stone-700">Servicios que realiza</label>
-              <div className="space-y-2 max-h-44 overflow-y-auto">
-                {services.map(svc => (
-                  <label key={svc.id} className="flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer transition-colors"
-                    style={form.serviceIds.includes(svc.id)
-                      ? { borderColor: '#EA580C', background: '#FFF7ED' }
-                      : { borderColor: '#e7e5e4', background: '#fff' }}>
-                    <input type="checkbox" checked={form.serviceIds.includes(svc.id)}
-                      onChange={() => toggleService(svc.id)} className="accent-orange-500" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-stone-800">{svc.name}</p>
-                      {svc.description && <p className="text-xs text-stone-400 truncate">{svc.description}</p>}
-                    </div>
-                  </label>
-                ))}
+          {tab === 'info' && (
+            <>
+              {/* Photo + Name */}
+              <div className="flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <Avatar name={form.name || '?'} photo={form.photo} size={14} />
+                  <button type="button" onClick={() => fileRef.current.click()}
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center shadow">
+                    <Camera size={12} className="text-white" />
+                  </button>
+                  <input ref={fileRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleFile} />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold mb-1.5 text-stone-700">Nombre *</label>
+                  <input className="input" value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Ej: María García" />
+                </div>
               </div>
-              {services.length > 0 && form.serviceIds.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">Sin servicios asignados: este profesional no aparecerá al reservar.</p>
+              <p className="text-xs text-stone-400 -mt-2">Hacé clic en la foto para subir una imagen JPG o PNG.</p>
+
+              {/* Services */}
+              {services.length > 0 && (
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-stone-700">Servicios que realiza</label>
+                  <div className="space-y-2 max-h-44 overflow-y-auto">
+                    {services.map(svc => (
+                      <label key={svc.id} className="flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer transition-colors"
+                        style={form.serviceIds.includes(svc.id)
+                          ? { borderColor: '#EA580C', background: '#FFF7ED' }
+                          : { borderColor: '#e7e5e4', background: '#fff' }}>
+                        <input type="checkbox" checked={form.serviceIds.includes(svc.id)}
+                          onChange={() => toggleService(svc.id)} className="accent-orange-500" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-stone-800">{svc.name}</p>
+                          {svc.description && <p className="text-xs text-stone-400 truncate">{svc.description}</p>}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {form.serviceIds.length === 0 && (
+                    <p className="text-xs text-amber-600 mt-1">Sin servicios asignados: este profesional no aparecerá al reservar.</p>
+                  )}
+                </div>
               )}
-            </div>
+
+              {/* Active toggle */}
+              {member && (
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-semibold text-stone-700">Profesional activo</label>
+                  <button type="button" onClick={() => setForm(f => ({ ...f, active: !f.active }))}
+                    className={`w-11 h-6 rounded-full transition-colors relative ${form.active ? 'bg-orange-500' : 'bg-stone-300'}`}>
+                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all shadow ${form.active ? 'left-5' : 'left-0.5'}`} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
-          {member && (
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-semibold text-stone-700">Profesional activo</label>
-              <button type="button" onClick={() => setForm(f => ({ ...f, active: !f.active }))}
-                className={`w-11 h-6 rounded-full transition-colors relative ${form.active ? 'bg-orange-500' : 'bg-stone-300'}`}>
-                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all shadow ${form.active ? 'left-5' : 'left-0.5'}`} />
-              </button>
-            </div>
+          {tab === 'schedule' && (
+            <>
+              <p className="text-xs text-stone-500">Si no configurás un horario propio, se usará el horario general del negocio.</p>
+
+              {/* Days */}
+              <div className="space-y-3">
+                {DAY_KEYS.map(key => (
+                  <div key={key}>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => toggleDay(key)}
+                        className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${schedule[key]?.enabled ? 'bg-orange-500' : 'bg-stone-300'}`}>
+                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow ${schedule[key]?.enabled ? 'left-4' : 'left-0.5'}`} />
+                      </button>
+                      <span className="text-sm font-semibold w-20 text-stone-700">{DAY_LABELS[key]}</span>
+                      {schedule[key]?.enabled && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <TimePicker value={schedule[key]?.start || '09:00'} onChange={v => setDayTime(key, 'start', v)} />
+                          <span className="text-xs text-stone-400">a</span>
+                          <TimePicker value={schedule[key]?.end || '18:00'} onChange={v => setDayTime(key, 'end', v)} />
+                        </div>
+                      )}
+                      {!schedule[key]?.enabled && <span className="text-xs text-stone-400">No trabaja</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Days off */}
+              <div className="pt-2">
+                <label className="block text-sm font-semibold mb-2 text-stone-700 flex items-center gap-1">
+                  <Calendar size={14} /> Días especiales sin atención
+                </label>
+                <div className="flex gap-2 mb-2">
+                  <input type="date" className="input flex-1 text-sm" value={newDayOff}
+                    onChange={e => setNewDayOff(e.target.value)} />
+                  <button type="button" onClick={addDayOff}
+                    className="px-3 py-2 rounded-xl text-sm font-semibold text-white shrink-0"
+                    style={{ background: '#EA580C' }}>
+                    <Plus size={14} />
+                  </button>
+                </div>
+                {form.daysOff.length > 0 && (
+                  <div className="space-y-1">
+                    {form.daysOff.map(d => (
+                      <div key={d} className="flex items-center justify-between px-3 py-1.5 rounded-lg text-sm"
+                        style={{ background: '#FFF7ED', border: '1px solid #FED7AA' }}>
+                        <span className="text-stone-700">{d}</span>
+                        <button type="button" onClick={() => removeDayOff(d)} className="text-stone-400 hover:text-red-500">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-3 p-5 pt-0 shrink-0">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-stone-200 text-stone-600 text-sm font-semibold hover:bg-stone-50 transition-colors">
             Cancelar
           </button>
@@ -121,6 +282,8 @@ function StaffModal({ member, services, onClose, onSave }) {
     </div>
   );
 }
+
+const MAX_STAFF = 5;
 
 export default function Staff() {
   const [staff, setStaff]     = useState([]);
@@ -161,6 +324,8 @@ export default function Staff() {
     return ids.map(id => services.find(s => s.id === id)?.name).filter(Boolean).join(', ');
   }
 
+  const atLimit = staff.length >= MAX_STAFF;
+
   return (
     <div className="space-y-6 max-w-3xl">
       {toast && (
@@ -172,14 +337,22 @@ export default function Staff() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Equipo</h1>
-          <p className="text-stone-500 text-sm mt-0.5">Cada profesional tiene sus propios turnos y servicios asignados.</p>
+          <p className="text-stone-500 text-sm mt-0.5">
+            Cada profesional tiene sus propios turnos y servicios asignados. ({staff.length}/{MAX_STAFF})
+          </p>
         </div>
-        <button onClick={() => setModal('new')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-white"
+        <button onClick={() => !atLimit && setModal('new')} disabled={atLimit}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: '#EA580C' }}>
           <Plus size={16} /> Nuevo profesional
         </button>
       </div>
+
+      {atLimit && (
+        <div className="text-sm px-4 py-3 rounded-xl" style={{ background: '#FFF7ED', border: '1px solid #FED7AA', color: '#9A3412' }}>
+          Alcanzaste el límite de {MAX_STAFF} profesionales del Plan Pro.
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-orange-500" /></div>

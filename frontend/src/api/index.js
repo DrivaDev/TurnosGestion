@@ -43,7 +43,7 @@ export const api = {
   // Settings
   getSettings:        ()      => req('GET', '/settings'),
   updateSettings:     (data)  => req('PUT', '/settings', data),
-  testWhatsapp:       (phone) => req('POST', '/settings/test-whatsapp', { phone }),
+  testEmail:          (email) => req('POST', '/settings/test-email', { email }),
 
   // Staff
   getStaff:    ()        => req('GET',    '/staff'),

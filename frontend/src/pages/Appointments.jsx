@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Trash2, Send, ChevronLeft, ChevronRight, Loader2, MessageCircle } from 'lucide-react';
+import { Plus, Trash2, Send, ChevronLeft, ChevronRight, Loader2, Mail } from 'lucide-react';
 import { api } from '../api';
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
@@ -10,11 +10,6 @@ function formatDisplayDate(d) {
 }
 
 const STATUS_OPTS = ['confirmado', 'pendiente', 'cancelado'];
-const STATUS_COLORS = {
-  confirmado: 'bg-green-100 text-green-800',
-  pendiente:  'bg-yellow-100 text-yellow-800',
-  cancelado:  'bg-red-100 text-red-800',
-};
 
 export default function Appointments() {
   const [selectedDate, setSelectedDate] = useState(todayISO());
@@ -58,8 +53,8 @@ export default function Appointments() {
 
   async function handleResend(id) {
     const r = await api.resendConfirmation(id);
-    if (r.ok) showToast('Confirmación enviada por WhatsApp ✅');
-    else showToast(r.reason === 'twilio_not_configured' ? 'Twilio no configurado' : 'Error al enviar', 'error');
+    if (r.ok) showToast('Confirmación enviada por email ✅');
+    else showToast(r.reason === 'email_not_configured' ? 'Email no configurado' : r.reason === 'no_email' ? 'Este turno no tiene email asociado' : 'Error al enviar', 'error');
   }
 
   return (
@@ -79,7 +74,6 @@ export default function Appointments() {
         </button>
       </div>
 
-      {/* Date navigation */}
       <div className="card flex items-center justify-between py-3">
         <button className="btn-secondary py-1.5 px-3" onClick={() => shiftDate(-1)}>
           <ChevronLeft size={16} />
@@ -98,7 +92,6 @@ export default function Appointments() {
         </button>
       </div>
 
-      {/* Appointment list */}
       <div className="card">
         {loading ? (
           <div className="flex justify-center py-10">
@@ -120,7 +113,9 @@ export default function Appointments() {
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900">{apt.name}</p>
                     {apt.serviceName && <p className="text-xs font-medium text-orange-600">{apt.serviceName}</p>}
+                    {apt.staffName && <p className="text-xs text-stone-500">con {apt.staffName}</p>}
                     <p className="text-sm text-gray-500">{apt.phone}</p>
+                    {apt.email && <p className="text-xs text-gray-400">{apt.email}</p>}
                     {apt.notes && <p className="text-xs text-gray-400 italic mt-0.5">{apt.notes}</p>}
                     <div className="flex items-center gap-2 mt-2">
                       <select
@@ -132,7 +127,7 @@ export default function Appointments() {
                       </select>
                       {apt.confirmation_sent ? (
                         <span className="text-xs text-green-600 flex items-center gap-1">
-                          <MessageCircle size={12} /> Confirmación enviada
+                          <Mail size={12} /> Email enviado
                         </span>
                       ) : null}
                     </div>
@@ -141,7 +136,7 @@ export default function Appointments() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     className="btn-secondary py-1 px-2 text-xs"
-                    title="Reenviar confirmación"
+                    title="Reenviar confirmación por email"
                     onClick={() => handleResend(apt.id)}
                   >
                     <Send size={13} />
@@ -180,34 +175,44 @@ export default function Appointments() {
 
 function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
   const [form, setForm] = useState({
-    name:        initial?.name        || '',
-    phone:       initial?.phone       || '',
-    date:        initial?.date        || defaultDate,
-    time:        initial?.time        || '',
-    notes:       initial?.notes       || '',
-    serviceId:   initial?.serviceId   || '',
-    sendWhatsapp: true,
+    name:      initial?.name      || '',
+    phone:     initial?.phone     || '',
+    email:     initial?.email     || '',
+    date:      initial?.date      || defaultDate,
+    time:      initial?.time      || '',
+    notes:     initial?.notes     || '',
+    serviceId: initial?.serviceId || '',
+    staffId:   initial?.staffId   || '',
+    sendEmail: true,
   });
-  const [services, setServices]       = useState([]);
-  const [slots, setSlots]             = useState([]);
+  const [services, setServices]   = useState([]);
+  const [staffList, setStaffList] = useState([]);
+  const [slots, setSlots]         = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [saving, setSaving]           = useState(false);
+  const [saving, setSaving]       = useState(false);
 
   useEffect(() => {
     api.get('/services').then(s => setServices(s)).catch(() => {});
+    api.getStaff().then(s => setStaffList(s)).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!form.date) return;
     setLoadingSlots(true);
     const serviceParam = form.serviceId ? `&serviceId=${form.serviceId}` : '';
-    api.getAvailableSlots(form.date, initial?.id, serviceParam)
+    const staffParam   = form.staffId   ? `&staffId=${form.staffId}`     : '';
+    api.getAvailableSlots(form.date, initial?.id, serviceParam + staffParam)
       .then(({ slots }) => {
         setSlots(slots || []);
         if (slots && !slots.includes(form.time)) setForm(f => ({ ...f, time: slots[0] || '' }));
       })
       .finally(() => setLoadingSlots(false));
-  }, [form.date, form.serviceId]);
+  }, [form.date, form.serviceId, form.staffId]);
+
+  // Filter staff by selected service
+  const filteredStaff = form.serviceId
+    ? staffList.filter(s => s.serviceIds?.includes(form.serviceId))
+    : staffList;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -232,12 +237,12 @@ function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b shrink-0">
           <h2 className="font-semibold text-lg">{initial ? 'Editar turno' : 'Nuevo turno'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-6 space-y-4">
           <div>
             <label className="label">Nombre del cliente *</label>
             <input className="input" value={form.name}
@@ -245,11 +250,16 @@ function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
               placeholder="Juan Pérez" required />
           </div>
           <div>
-            <label className="label">Teléfono WhatsApp *</label>
+            <label className="label">Teléfono *</label>
             <input className="input" value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               placeholder="+5491122334455" required />
-            <p className="text-xs text-gray-400 mt-1">Con código de país. Ej: +5491122334455</p>
+          </div>
+          <div>
+            <label className="label">Email (para confirmación)</label>
+            <input type="email" className="input" value={form.email}
+              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              placeholder="cliente@email.com" />
           </div>
           <div>
             <label className="label">Fecha *</label>
@@ -260,12 +270,24 @@ function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
             <div>
               <label className="label">Servicio</label>
               <select className="input" value={form.serviceId}
-                onChange={e => setForm(f => ({ ...f, serviceId: e.target.value, time: '' }))}>
+                onChange={e => setForm(f => ({ ...f, serviceId: e.target.value, staffId: '', time: '' }))}>
                 <option value="">Sin especificar</option>
                 {services.map(s => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.durationMin < 60 ? `${s.durationMin}min` : `${s.durationMin/60}h`})
                   </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {filteredStaff.length > 0 && (
+            <div>
+              <label className="label">Profesional</label>
+              <select className="input" value={form.staffId}
+                onChange={e => setForm(f => ({ ...f, staffId: e.target.value, time: '' }))}>
+                <option value="">Sin especificar</option>
+                {filteredStaff.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
             </div>
@@ -303,20 +325,23 @@ function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
               placeholder="Observaciones..." />
           </div>
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-            <input type="checkbox" checked={form.sendWhatsapp}
-              onChange={e => setForm(f => ({ ...f, sendWhatsapp: e.target.checked }))}
-              className="rounded" />
-            Enviar confirmación por WhatsApp
-          </label>
-          <div className="flex gap-3 pt-2">
-            <button type="button" className="btn-secondary flex-1" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="btn-primary flex-1" disabled={saving || !form.time}>
-              {saving ? <Loader2 size={16} className="animate-spin" /> : null}
-              {initial ? 'Guardar cambios' : 'Crear turno'}
-            </button>
-          </div>
+          {form.email && (
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input type="checkbox" checked={form.sendEmail}
+                onChange={e => setForm(f => ({ ...f, sendEmail: e.target.checked }))}
+                className="rounded" />
+              Enviar confirmación por email
+            </label>
+          )}
         </form>
+        <div className="flex gap-3 p-6 pt-0 border-t shrink-0">
+          <button type="button" className="btn-secondary flex-1" onClick={onClose}>Cancelar</button>
+          <button type="submit" form="" className="btn-primary flex-1" disabled={saving || !form.time}
+            onClick={handleSubmit}>
+            {saving ? <Loader2 size={16} className="animate-spin" /> : null}
+            {initial ? 'Guardar cambios' : 'Crear turno'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ const JWT_EXPIRES = '30d';
 
 function makeToken(user, tenant) {
   return jwt.sign(
-    { userId: user._id, tenantId: tenant._id, role: user.role, businessName: tenant.name, slug: tenant.slug, approved: tenant.approved },
+    { userId: user._id, tenantId: tenant._id, role: user.role, businessName: tenant.name, slug: tenant.slug, approved: tenant.approved, plan: tenant.plan || 'basic' },
     JWT_SECRET(),
     { expiresIn: JWT_EXPIRES }
   );
@@ -54,7 +54,7 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({
       token: makeToken(user, tenant),
-      user: { name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug, approved: tenant.approved },
+      user: { name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug, approved: tenant.approved, plan: tenant.plan || 'basic' },
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
     const tenant = await Tenant.findById(user.tenantId);
     res.json({
       token: makeToken(user, tenant),
-      user: { name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug, approved: tenant.approved },
+      user: { name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug, approved: tenant.approved, plan: tenant.plan || 'basic' },
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -84,7 +84,7 @@ router.get('/me', auth, async (req, res) => {
     const user   = await User.findById(req.user.userId).select('-passwordHash');
     const tenant = await Tenant.findById(req.user.tenantId);
     if (!user || !tenant) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug, approved: tenant.approved, active: tenant.active });
+    res.json({ name: user.name, email: user.email, role: user.role, businessName: tenant.name, slug: tenant.slug, approved: tenant.approved, active: tenant.active, plan: tenant.plan || 'basic' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

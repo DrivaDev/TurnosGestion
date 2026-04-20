@@ -9,6 +9,7 @@ const tenantSchema = new Schema(
     notes:     { type: String, default: '' },
     active:        { type: Boolean, default: true },
     approved:      { type: Boolean, default: false },
+    plan:          { type: String, enum: ['basic', 'pro'], default: 'basic' },
     deactivatedAt: { type: Date, default: null },
   },
   { timestamps: true, versionKey: false }
@@ -48,6 +49,7 @@ const appointmentSchema = new Schema(
     notes:             { type: String, default: null },
     serviceName:       { type: String, default: null },
     durationMin:       { type: Number, default: null },
+    email:             { type: String, default: null },
     staffId:           { type: Schema.Types.ObjectId, ref: 'Staff', default: null },
     staffName:         { type: String, default: null },
     status:            { type: String, default: 'confirmado' },
@@ -82,6 +84,8 @@ const staffSchema = new Schema(
     serviceIds: [{ type: Schema.Types.ObjectId }],
     active:     { type: Boolean, default: true },
     order:      { type: Number, default: 0 },
+    schedule:   { type: String, default: '' },
+    daysOff:    [{ type: String }],
   },
   { timestamps: true, versionKey: false }
 );

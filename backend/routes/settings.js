@@ -1,9 +1,9 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../database');
-const { sendTest } = require('../services/whatsapp');
+const { sendTest } = require('../services/email');
 
-const SENSITIVE = ['twilio_auth_token'];
+const SENSITIVE = ['email_password'];
 
 router.get('/', async (req, res) => {
   try {
@@ -19,7 +19,7 @@ router.put('/', async (req, res) => {
     const allowed = [
       'business_name','business_description','reminder_minutes',
       'confirmation_message','reminder_message',
-      'twilio_account_sid','twilio_auth_token','twilio_whatsapp_from',
+      'email_from','email_password',
     ];
     const updates = {};
     for (const key of allowed) {
@@ -38,11 +38,11 @@ router.put('/', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/test-whatsapp', async (req, res) => {
+router.post('/test-email', async (req, res) => {
   try {
-    const { phone } = req.body;
-    if (!phone) return res.status(400).json({ error: 'Falta el campo phone' });
-    res.json(await sendTest(req.user.tenantId, phone));
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Falta el campo email' });
+    res.json(await sendTest(req.user.tenantId, email));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

@@ -7,3 +7,5 @@ backend/.env
 .env
 .env.local
 *.local
+
+.vercel

@@ -32,10 +32,9 @@ export default function Navbar() {
 
         {/* Nav links */}
         <nav className="flex items-center gap-1">
-          {links.map(({ to, label, Icon }) => (
+          {links.filter(l => l.to !== '/staff' || user?.plan === 'pro').map(({ to, label, Icon }) => (
             <NavLink
-              key={to}
-              to={to}
+              key={to} to={to}
               className={({ isActive }) =>
                 `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
                   isActive

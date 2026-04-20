@@ -4,7 +4,7 @@ import { tenantConfigs } from '../tenantConfigs';
 import DrivaDevBooking from './tenants/DrivaDevBooking';
 import {
   CalendarDays, Clock, User, Phone, CheckCircle,
-  ChevronLeft, ChevronRight, Loader2, MessageSquare, LayoutGrid, DollarSign, Users,
+  ChevronLeft, ChevronRight, Loader2, MessageSquare, LayoutGrid, DollarSign, Users, Mail,
 } from 'lucide-react';
 
 const CUSTOM_PAGES = { 'driva-dev': DrivaDevBooking };
@@ -57,7 +57,7 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState('');
   const [slots, setSlots]               = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [form, setForm]                 = useState({ name:'', phone:'', notes:'' });
+  const [form, setForm]                 = useState({ name:'', phone:'', email:'', notes:'' });
   const [submitting, setSubmitting]     = useState(false);
   const [error, setError]               = useState('');
   const [bookedApt, setBookedApt]       = useState(null);
@@ -484,6 +484,11 @@ export default function BookingPage() {
                   <p className="text-xs text-stone-400 mt-1">Con código de país. Ej: +5491122334455</p>
                 </div>
                 <div>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1C1917' }}><Mail size={14} className="inline mr-1" /> Email (para confirmación)</label>
+                  <input type="email" className="brand-input" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="tu@email.com" />
+                  <p className="text-xs text-stone-400 mt-1">Te enviaremos la confirmación y un recordatorio por email.</p>
+                </div>
+                <div>
                   <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1C1917' }}><MessageSquare size={14} className="inline mr-1" /> Notas (opcional)</label>
                   <textarea className="brand-input" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Alguna indicación especial..." />
                 </div>
@@ -503,7 +508,7 @@ export default function BookingPage() {
               <CheckCircle size={40} style={{ color: theme.primary }} />
             </div>
             <h2 className="text-2xl font-bold mb-2" style={{ color: theme.secondary }}>¡Turno confirmado!</h2>
-            <p className="text-stone-500 mb-6">Te enviamos la confirmación por WhatsApp.</p>
+            <p className="text-stone-500 mb-6">{form.email ? 'Te enviamos la confirmación por email.' : '¡Tu turno está reservado!'}</p>
             <div className="w-full rounded-2xl p-5 text-left space-y-3 mb-6" style={{ background: theme.accent }}>
               {selectedService && (
                 <div className="flex items-center gap-3">

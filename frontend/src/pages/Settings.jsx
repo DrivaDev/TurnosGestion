@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, Send, Loader2, Eye, EyeOff, Info, Link, Copy, Check, MessageCircle } from 'lucide-react';
+import { Save, Send, Loader2, Eye, EyeOff, Info, Link, Copy, Check, MessageCircle, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 
@@ -30,12 +30,11 @@ export default function Settings() {
     reminder_minutes: '60',
     confirmation_message: '',
     reminder_message: '',
-    twilio_account_sid: '',
-    twilio_auth_token: '',
-    twilio_whatsapp_from: '',
+    email_from: '',
+    email_password: '',
   });
-  const [showToken, setShowToken] = useState(false);
-  const [testPhone, setTestPhone] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [toast, setToast] = useState(null);
@@ -46,9 +45,7 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    api.getSettings().then(s => {
-      setForm(f => ({ ...f, ...s }));
-    });
+    api.getSettings().then(s => setForm(f => ({ ...f, ...s })));
   }, []);
 
   function set(key, val) { setForm(f => ({ ...f, [key]: val })); }
@@ -67,13 +64,13 @@ export default function Settings() {
   }
 
   async function handleTest() {
-    if (!testPhone) { showToast('Ingresá un número de teléfono', 'error'); return; }
+    if (!testEmail) { showToast('Ingresá un email de prueba', 'error'); return; }
     setTesting(true);
     try {
-      const r = await api.testWhatsapp(testPhone);
-      if (r.ok) showToast('Mensaje de prueba enviado ✅');
-      else if (r.reason === 'twilio_not_configured')
-        showToast('Twilio no está configurado. Guardá las credenciales primero.', 'error');
+      const r = await api.post('/settings/test-email', { email: testEmail });
+      if (r.ok) showToast('Email de prueba enviado ✅');
+      else if (r.reason === 'email_not_configured')
+        showToast('Email no configurado. Guardá las credenciales primero.', 'error');
       else showToast(`Error: ${r.reason}`, 'error');
     } catch (err) {
       showToast(err.message, 'error');
@@ -143,73 +140,59 @@ export default function Settings() {
             <label className="label">Descripción (aparece en la página de reservas)</label>
             <textarea className="input" rows={2} value={form.business_description}
               onChange={e => set('business_description', e.target.value)}
-              placeholder="Ej: Peluquería para hombres en el centro. Cortes modernos y clásicos." />
+              placeholder="Ej: Peluquería para hombres en el centro." />
           </div>
         </div>
 
-        {/* WhatsApp / Twilio */}
+        {/* Email */}
         <div className="card space-y-4">
           <div className="flex items-start justify-between">
-            <h2 className="font-semibold text-gray-900">WhatsApp (Twilio)</h2>
-            <a
-              href="https://console.twilio.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-            >
-              <Info size={12} /> Obtener credenciales
-            </a>
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Mail size={16} /> Email (confirmaciones y recordatorios)
+            </h2>
           </div>
 
           <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-800 space-y-1">
-            <p className="font-medium">Pasos para configurar WhatsApp:</p>
+            <p className="font-medium">Configuración con Gmail:</p>
             <ol className="list-decimal list-inside space-y-1 text-blue-700">
-              <li>Creá una cuenta en twilio.com (tiene trial gratuito)</li>
-              <li>Activá el <strong>WhatsApp Sandbox</strong> en Messaging → Try it out</li>
-              <li>Copiá el Account SID y Auth Token de tu dashboard</li>
-              <li>El número del sandbox es: <code>whatsapp:+14155238886</code></li>
-              <li>Tus clientes deben unirse al sandbox enviando el código al número</li>
+              <li>Activá la verificación en dos pasos en tu cuenta de Google</li>
+              <li>Andá a <strong>Seguridad → Contraseñas de aplicación</strong></li>
+              <li>Creá una contraseña para "Correo" y copiala abajo</li>
+              <li>Los clientes recibirán los emails desde tu dirección de Gmail</li>
             </ol>
           </div>
 
           <div>
-            <label className="label">Account SID</label>
-            <input className="input font-mono text-sm" value={form.twilio_account_sid}
-              onChange={e => set('twilio_account_sid', e.target.value)}
-              placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+            <label className="label">Email de Gmail</label>
+            <input className="input" type="email" value={form.email_from}
+              onChange={e => set('email_from', e.target.value)}
+              placeholder="tunegocio@gmail.com" />
           </div>
           <div>
-            <label className="label">Auth Token</label>
+            <label className="label">Contraseña de aplicación</label>
             <div className="relative">
               <input
-                className="input font-mono text-sm pr-10"
-                type={showToken ? 'text' : 'password'}
-                value={form.twilio_auth_token}
-                onChange={e => set('twilio_auth_token', e.target.value)}
-                placeholder="••••••••••••••••••••••••••••••••"
+                className="input pr-10"
+                type={showPass ? 'text' : 'password'}
+                value={form.email_password}
+                onChange={e => set('email_password', e.target.value)}
+                placeholder="xxxx xxxx xxxx xxxx"
               />
               <button type="button"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                onClick={() => setShowToken(s => !s)}>
-                {showToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                onClick={() => setShowPass(s => !s)}>
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-          </div>
-          <div>
-            <label className="label">Número de WhatsApp (From)</label>
-            <input className="input font-mono text-sm" value={form.twilio_whatsapp_from}
-              onChange={e => set('twilio_whatsapp_from', e.target.value)}
-              placeholder="whatsapp:+14155238886" />
-            <p className="text-xs text-gray-400 mt-1">Sandbox: whatsapp:+14155238886</p>
+            <p className="text-xs text-gray-400 mt-1">Contraseña de aplicación de Google (16 caracteres). No es tu contraseña normal.</p>
           </div>
 
-          {/* Test */}
           <div className="pt-2 border-t space-y-2">
-            <label className="label">Probar envío de WhatsApp</label>
+            <label className="label">Probar envío de email</label>
             <div className="flex gap-2">
-              <input className="input" value={testPhone}
-                onChange={e => setTestPhone(e.target.value)}
-                placeholder="+5491122334455" />
+              <input className="input" type="email" value={testEmail}
+                onChange={e => setTestEmail(e.target.value)}
+                placeholder="test@ejemplo.com" />
               <button type="button" className="btn-green shrink-0" onClick={handleTest} disabled={testing}>
                 {testing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 Probar
@@ -229,15 +212,12 @@ export default function Settings() {
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
-            <p className="text-xs text-gray-400 mt-1">
-              El sistema revisa y envía recordatorios automáticamente cada minuto.
-            </p>
           </div>
         </div>
 
         {/* Message templates */}
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-900">Mensajes de WhatsApp</h2>
+          <h2 className="font-semibold text-gray-900">Mensajes de email</h2>
           <div className="p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
             <p className="font-medium mb-1">Variables disponibles:</p>
             <code className="space-x-2">
@@ -246,7 +226,6 @@ export default function Settings() {
               <span className="bg-white px-1 py-0.5 rounded border">{'{hora}'}</span>
             </code>
           </div>
-
           <div>
             <label className="label">Mensaje de confirmación</label>
             <textarea className="input" rows={3} value={form.confirmation_message}

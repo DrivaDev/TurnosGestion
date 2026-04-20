@@ -2,7 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const { Tenant, Service, Appointment, Staff } = require('../db/models');
 const db = require('../database');
-const { sendConfirmation } = require('../services/whatsapp');
+const { sendConfirmation } = require('../services/email');
 
 const DAY_KEYS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
 
@@ -86,9 +86,30 @@ router.get('/:slug/slots', async (req, res) => {
     const blocked = await db.getBlockedDays(tid);
     if (blocked.includes(date)) return res.json({ slots: [], reason: 'día bloqueado' });
 
-    const dayKey    = DAY_KEYS[new Date(`${date}T12:00:00`).getDay()];
-    const schedule  = JSON.parse(await db.getSetting(tid, 'schedule') || '{}');
-    const dayConfig = schedule[dayKey];
+    const dayKey = DAY_KEYS[new Date(`${date}T12:00:00`).getDay()];
+
+    // Resolve schedule: use staff's if provided and configured
+    let dayConfig = null;
+    let staffDaysOff = [];
+    const { staffId } = req.query;
+    if (staffId && staffId !== 'undefined' && staffId !== 'null') {
+      try {
+        const sf = await Staff.findOne({ _id: staffId, tenantId: tid }).lean();
+        if (sf) {
+          staffDaysOff = sf.daysOff || [];
+          if (sf.schedule) {
+            const sfSchedule = JSON.parse(sf.schedule);
+            if (sfSchedule[dayKey]) dayConfig = sfSchedule[dayKey];
+          }
+        }
+      } catch (_) {}
+    }
+    if (staffDaysOff.includes(date)) return res.json({ slots: [], reason: 'día libre del profesional' });
+
+    if (!dayConfig) {
+      const schedule = JSON.parse(await db.getSetting(tid, 'schedule') || '{}');
+      dayConfig = schedule[dayKey];
+    }
     if (!dayConfig?.enabled) return res.json({ slots: [], reason: 'día no habilitado' });
     if (!dayConfig.start || !dayConfig.end) return res.json({ slots: [], reason: 'horario no configurado' });
 
@@ -108,7 +129,6 @@ router.get('/:slug/slots', async (req, res) => {
     const allSlots = generateSlots(dayConfig.start, dayConfig.end, slotDuration);
 
     // Filter appointments by staffId if provided (each staff member has independent slots)
-    const { staffId } = req.query;
     const staffFilter = (staffId && staffId !== 'undefined' && staffId !== 'null') ? { staffId } : {};
     const taken = await Appointment.find({
       tenantId: tid, date, status: { $ne: 'cancelado' }, ...staffFilter,
@@ -155,7 +175,7 @@ router.post('/:slug/book', async (req, res) => {
     if (!check.ok) return res.status(check.status).json({ error: check.error });
 
     const tid = tenant._id;
-    const { name, phone, date, time, notes, serviceId, staffId } = req.body;
+    const { name, phone, email, date, time, notes, serviceId, staffId } = req.body;
     if (!name || !phone || !date || !time)
       return res.status(400).json({ error: 'Faltan campos requeridos' });
 
@@ -193,13 +213,13 @@ router.post('/:slug/book', async (req, res) => {
         return res.status(409).json({ error: 'Este horario ya fue reservado. Por favor elegí otro.' });
     }
 
-    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, date, time, notes, serviceName, durationMin, staffId: resolvedStaffId, staffName, source: 'web' });
-    const whatsapp = await sendConfirmation(tid, apt);
+    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, email: email || null, date, time, notes, serviceName, durationMin, staffId: resolvedStaffId, staffName, source: 'web' });
+    const emailResult = await sendConfirmation(tid, apt);
 
     res.status(201).json({
       ok: true,
       appointment: { name: apt.name, date: apt.date, time: apt.time },
-      whatsapp,
+      email: emailResult,
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
