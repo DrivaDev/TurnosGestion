@@ -56,7 +56,7 @@ const JSON_LD = {
   name: 'Turnly',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
-  description: 'Sistema de gestión de turnos online para negocios locales. Página de reservas personalizada, confirmaciones y recordatorios automáticos por WhatsApp.',
+  description: 'Sistema de gestión de turnos online para negocios locales. Página de reservas personalizada, confirmaciones y recordatorios automáticos por email.',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'ARS', description: 'Consultar precio según plan' },
   author: { '@type': 'Organization', name: 'Driva Dev', url: 'https://drivadev.com' },
   url: 'https://turnosgestion.vercel.app',
@@ -133,7 +133,7 @@ export default function Landing() {
           </span>
         </h1>
         <p className="text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Página de reservas personalizada, confirmaciones y recordatorios por WhatsApp,
+          Página de reservas personalizada, confirmaciones y recordatorios por email,
           y un panel para gestionar todo. Sin apps, sin complicaciones.
         </p>
 
@@ -345,7 +345,7 @@ export default function Landing() {
             <p className="text-4xl font-extrabold text-white mb-1">$20.000<span className="text-lg font-medium text-white/40">/mes</span></p>
             <p className="text-white/40 text-sm mb-5">Para negocios individuales.</p>
             <div className="space-y-2 flex-1">
-              {['🎁 1er mes completamente gratis','Página de reservas personalizada','Panel de gestión completo','Confirmaciones y recordatorios por email','Diseño 100% personalizado','Soporte por WhatsApp'].map(f => (
+              {['Página de reservas personalizada','Panel de gestión completo','Confirmaciones y recordatorios por email','Diseño 100% personalizado','Soporte por WhatsApp'].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
                   <CheckCircle2 size={14} style={{ color: 'rgba(255,255,255,0.4)' }} className="shrink-0" /> {f}
                 </div>
@@ -371,7 +371,7 @@ export default function Landing() {
             <p className="text-4xl font-extrabold text-white mb-1">$30.000<span className="text-lg font-medium text-white/40">/mes</span></p>
             <p className="text-white/40 text-sm mb-5">Para equipos de hasta 5 profesionales.</p>
             <div className="space-y-2 flex-1">
-              {['Todo lo del Plan Básico','Hasta 5 profesionales/usuarios','Cada uno con su propia agenda','El cliente elige con quién reservar','Perfiles editables con foto y servicios','Servicios por profesional'].map(f => (
+              {['Todo lo del Plan Básico','Hasta 5 profesionales/usuarios','Cada uno con su propia agenda','El cliente elige con quién reservar','Sistema apto para reservas con seña','Perfiles editables con foto y servicios'].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
                   <CheckCircle2 size={14} style={{ color: '#F97316' }} className="shrink-0" /> {f}
                 </div>

@@ -203,13 +203,18 @@ export default function Appointments() {
             {filtered.map(apt => (
               <div key={apt.id} className={`py-4 flex items-start justify-between gap-4 ${apt.status === 'cancelado' ? 'opacity-60' : ''}`}>
                 <div className="flex items-start gap-3 min-w-0">
-                  <span className="text-blue-700 font-bold text-lg w-14 shrink-0">{apt.time}</span>
+                  <span className="text-blue-700 font-bold text-xl w-14 shrink-0 pt-0.5">{apt.time}</span>
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900">{apt.name}</p>
-                    {apt.serviceName && <p className="text-xs font-medium text-orange-600">{apt.serviceName}</p>}
-                    {apt.staffName && <p className="text-xs text-stone-500">con {apt.staffName}</p>}
-                    <p className="text-sm text-gray-500">{apt.phone}</p>
-                    {apt.email && <p className="text-xs text-gray-400">{apt.email}</p>}
+                    <p className="font-bold text-gray-900 text-base">{apt.name}</p>
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                      {apt.serviceName && <span className="text-sm font-semibold text-orange-600">{apt.serviceName}</span>}
+                      {apt.staffName && apt.serviceName && <span className="text-gray-300 text-xs">·</span>}
+                      {apt.staffName && <span className="text-sm text-stone-500 font-medium">{apt.staffName}</span>}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-xs text-gray-400">{apt.phone}</span>
+                      {apt.email && <span className="text-xs text-gray-400">{apt.email}</span>}
+                    </div>
                     {apt.notes && <p className="text-xs text-gray-400 italic mt-0.5">{apt.notes}</p>}
                     <StatusBadge apt={apt} onChange={handleStatusChange} />
                     {apt.confirmation_sent ? (

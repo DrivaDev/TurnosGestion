@@ -127,7 +127,7 @@ export default function BookingPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!form.name.trim() || !form.phone.trim()) { setError('Completá tu nombre y teléfono'); return; }
+    if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) { setError('Completá tu nombre, teléfono y email'); return; }
     setSubmitting(true);
     try {
       const res = await fetch(`${BASE}/${slug}/book`, {
@@ -484,9 +484,9 @@ export default function BookingPage() {
                   <p className="text-xs text-stone-400 mt-1">Con código de país. Ej: +5491122334455</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1C1917' }}><Mail size={14} className="inline mr-1" /> Email (para confirmación)</label>
-                  <input type="email" className="brand-input" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="tu@email.com" />
-                  <p className="text-xs text-stone-400 mt-1">Te enviaremos la confirmación y un recordatorio por email.</p>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1C1917' }}><Mail size={14} className="inline mr-1" /> Email *</label>
+                  <input type="email" className="brand-input" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="tu@email.com" required />
+                  <p className="text-xs text-stone-400 mt-1">Te enviaremos la confirmación y un recordatorio por aquí.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1C1917' }}><MessageSquare size={14} className="inline mr-1" /> Notas (opcional)</label>
