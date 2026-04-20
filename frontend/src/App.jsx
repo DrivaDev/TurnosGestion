@@ -13,6 +13,7 @@ import Staff             from './pages/Staff';
 import SuperAdminLogin   from './pages/SuperAdminLogin';
 import SuperAdmin        from './pages/SuperAdmin';
 import Landing           from './pages/Landing';
+import CancelPage        from './pages/CancelPage';
 import { MessageSquare } from 'lucide-react';
 
 function ProtectedLayout() {
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/login"        element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register"     element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/book/:slug"   element={<BookingPage />} />
+          <Route path="/cancel/:token" element={<CancelPage />} />
           <Route path="/admin/login"  element={<SuperAdminLogin />} />
           <Route path="/admin"        element={<SuperAdmin />} />
           <Route path="/*"            element={<ProtectedLayout />} />

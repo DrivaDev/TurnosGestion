@@ -1,5 +1,6 @@
-const express = require('express');
-const router  = express.Router();
+const express  = require('express');
+const router   = express.Router();
+const crypto   = require('crypto');
 const { Tenant, Service, Appointment, Staff } = require('../db/models');
 const db = require('../database');
 const { sendConfirmation } = require('../services/email');
@@ -216,14 +217,33 @@ router.post('/:slug/book', async (req, res) => {
         return res.status(409).json({ error: 'Este horario ya fue reservado. Por favor elegí otro.' });
     }
 
-    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, email: email || null, date, time, notes, serviceName, durationMin, staffId: resolvedStaffId, staffName, source: 'web' });
-    const emailResult = await sendConfirmation(tid, apt);
+    const requireConf = (await db.getSetting(tid, 'require_confirmation')) === 'true';
+    const cancelToken = crypto.randomBytes(32).toString('hex');
+    const status = requireConf ? 'pendiente' : 'confirmado';
+
+    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, email: email || null, date, time, notes, serviceName, durationMin, staffId: resolvedStaffId, staffName, source: 'web', cancelToken, status });
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const cancelUrl = `${baseUrl}/cancel/${cancelToken}`;
+    const emailResult = await sendConfirmation(tid, apt, { cancelUrl, pendingConfirmation: requireConf });
 
     res.status(201).json({
       ok: true,
+      pendingConfirmation: requireConf,
       appointment: { name: apt.name, date: apt.date, time: apt.time },
       email: emailResult,
     });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/public/cancel/:token — cancelar turno desde email
+router.post('/cancel/:token', async (req, res) => {
+  try {
+    const apt = await db.getAppointmentByToken(req.params.token);
+    if (!apt) return res.status(404).json({ error: 'Enlace inválido o expirado.' });
+    if (apt.status === 'cancelado') return res.json({ ok: true, alreadyCancelled: true });
+    await db.updateAppointment(apt.tenantId, apt.id || apt._id?.toString(), { status: 'cancelado' });
+    res.json({ ok: true, alreadyCancelled: false, name: apt.name, date: apt.date, time: apt.time });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

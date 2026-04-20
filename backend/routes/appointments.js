@@ -179,7 +179,10 @@ router.post('/:id/resend-confirmation', async (req, res) => {
     const apt = await db.getAppointment(tid, req.params.id);
     if (!apt) return res.status(404).json({ error: 'Turno no encontrado' });
     await db.updateAppointment(tid, apt.id, { confirmation_sent: 0 });
-    res.json(await sendConfirmation(tid, await db.getAppointment(tid, apt.id)));
+    const fresh = await db.getAppointment(tid, apt.id);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const cancelUrl = fresh.cancelToken ? `${baseUrl}/cancel/${fresh.cancelToken}` : null;
+    res.json(await sendConfirmation(tid, fresh, { cancelUrl }));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

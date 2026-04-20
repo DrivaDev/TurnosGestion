@@ -42,12 +42,30 @@ async function sendEmail(tenantId, to, subject, text) {
   }
 }
 
-async function sendConfirmation(tenantId, apt) {
+async function sendConfirmation(tenantId, apt, { cancelUrl, pendingConfirmation } = {}) {
   if (!apt.email) return { ok: false, reason: 'no_email' };
   const businessName = await db.getSetting(tenantId, 'business_name') || 'el negocio';
-  const template = await db.getSetting(tenantId, 'confirmation_message')
-    || '¡Hola {nombre}! Tu turno en ' + businessName + ' fue confirmado para el {fecha} a las {hora}. ¡Te esperamos!';
-  const result = await sendEmail(tenantId, apt.email, `Confirmación de turno — ${businessName}`, buildMessage(template, apt));
+
+  let body;
+  if (pendingConfirmation) {
+    const template = await db.getSetting(tenantId, 'confirmation_message')
+      || '¡Hola {nombre}! Recibimos tu solicitud de turno en ' + businessName + ' para el {fecha} a las {hora}. Te avisaremos cuando sea confirmado.';
+    body = buildMessage(template, apt);
+  } else {
+    const template = await db.getSetting(tenantId, 'confirmation_message')
+      || '¡Hola {nombre}! Tu turno en ' + businessName + ' fue confirmado para el {fecha} a las {hora}. ¡Te esperamos!';
+    body = buildMessage(template, apt);
+  }
+
+  if (cancelUrl) {
+    body += `\n\nSi necesitás cancelar tu turno, hacé clic aquí:\n${cancelUrl}`;
+  }
+
+  const subject = pendingConfirmation
+    ? `Solicitud de turno recibida — ${businessName}`
+    : `Confirmación de turno — ${businessName}`;
+
+  const result = await sendEmail(tenantId, apt.email, subject, body);
   if (result.ok) await db.markConfirmationSent(tenantId, apt.id || apt._id?.toString());
   return result;
 }

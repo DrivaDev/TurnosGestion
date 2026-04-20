@@ -75,12 +75,16 @@ async function getAppointments(tenantId, { date, month, status } = {}) {
   return Appointment.find(q).sort({ date: 1, time: 1 }).lean({ virtuals: true });
 }
 
+async function getAppointmentByToken(cancelToken) {
+  return Appointment.findOne({ cancelToken }).lean({ virtuals: true });
+}
+
 async function getAppointment(tenantId, id) {
   return Appointment.findOne({ _id: id, tenantId }).lean({ virtuals: true });
 }
 
-async function createAppointment(tenantId, { name, phone, email, date, time, notes, serviceName, durationMin, staffId, staffName, source = 'admin' }) {
-  const apt = await Appointment.create({ tenantId, name, phone, email: email || null, date, time, notes, serviceName, durationMin, staffId: staffId || null, staffName: staffName || null, source });
+async function createAppointment(tenantId, { name, phone, email, date, time, notes, serviceName, durationMin, staffId, staffName, source = 'admin', cancelToken = null, status = 'confirmado' }) {
+  const apt = await Appointment.create({ tenantId, name, phone, email: email || null, date, time, notes, serviceName, durationMin, staffId: staffId || null, staffName: staffName || null, source, cancelToken, status });
   return apt.toJSON();
 }
 
@@ -122,7 +126,7 @@ async function markReminderSent(tenantId, id) {
 module.exports = {
   getSetting, getAllSettings, updateSettings, initTenantConfig,
   getBlockedDays, addBlockedDay, removeBlockedDay,
-  getAppointments, getAppointment, createAppointment,
+  getAppointments, getAppointment, getAppointmentByToken, createAppointment,
   updateAppointment, deleteAppointment, isSlotTaken,
   getPendingReminders, getAllTenants,
   markConfirmationSent, markReminderSent,

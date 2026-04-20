@@ -74,12 +74,11 @@ function NotesModal({ tenant, onClose, onSave }) {
 }
 
 const FILTER_OPTS = [
-  { value: 'all',     label: 'Todos' },
-  { value: 'paid',    label: 'Pagados' },
-  { value: 'unpaid',  label: 'Sin pago' },
-  { value: 'basic',   label: 'Plan Basic' },
-  { value: 'pro',     label: 'Plan Pro' },
-  { value: 'pending', label: 'Sin aprobar' },
+  { value: 'all',    label: 'Todos' },
+  { value: 'paid',   label: 'Pagados' },
+  { value: 'unpaid', label: 'Sin pago' },
+  { value: 'basic',  label: 'Plan Basic' },
+  { value: 'pro',    label: 'Plan Pro' },
 ];
 
 export default function SuperAdmin() {
@@ -152,7 +151,6 @@ export default function SuperAdmin() {
       : filter === 'unpaid'  ? !t.isPaid
       : filter === 'basic'   ? t.plan === 'basic'
       : filter === 'pro'     ? t.plan === 'pro'
-      : filter === 'pending' ? !t.approved
       : true;
     return matchSearch && matchFilter;
   });

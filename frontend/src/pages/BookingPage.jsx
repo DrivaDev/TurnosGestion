@@ -143,7 +143,7 @@ export default function BookingPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Error al reservar'); return; }
-      setBookedApt(data.appointment);
+      setBookedApt({ ...data.appointment, pendingConfirmation: data.pendingConfirmation });
       setStep('success');
     } catch { setError('Error de conexión. Intentá de nuevo.'); }
     finally { setSubmitting(false); }
@@ -507,8 +507,14 @@ export default function BookingPage() {
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5" style={{ background: theme.accent }}>
               <CheckCircle size={40} style={{ color: theme.primary }} />
             </div>
-            <h2 className="text-2xl font-bold mb-2" style={{ color: theme.secondary }}>¡Turno confirmado!</h2>
-            <p className="text-stone-500 mb-6">{form.email ? 'Te enviamos la confirmación por email.' : '¡Tu turno está reservado!'}</p>
+            <h2 className="text-2xl font-bold mb-2" style={{ color: theme.secondary }}>
+              {bookedApt.pendingConfirmation ? '¡Solicitud recibida!' : '¡Turno confirmado!'}
+            </h2>
+            <p className="text-stone-500 mb-6">
+              {bookedApt.pendingConfirmation
+                ? 'Tu turno está pendiente de confirmación. Te avisaremos por email cuando sea confirmado.'
+                : form.email ? 'Te enviamos la confirmación por email.' : '¡Tu turno está reservado!'}
+            </p>
             <div className="w-full rounded-2xl p-5 text-left space-y-3 mb-6" style={{ background: theme.accent }}>
               {selectedService && (
                 <div className="flex items-center gap-3">

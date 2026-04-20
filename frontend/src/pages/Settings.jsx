@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, Send, Loader2, Eye, EyeOff, Info, Link, Copy, Check, MessageCircle, Mail } from 'lucide-react';
+import { Save, Send, Loader2, Eye, EyeOff, Link, Copy, Check, MessageCircle, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 
@@ -32,6 +32,7 @@ export default function Settings() {
     reminder_message: '',
     email_from: '',
     email_password: '',
+    require_confirmation: 'false',
   });
   const [showPass, setShowPass] = useState(false);
   const [testEmail, setTestEmail] = useState('');
@@ -238,6 +239,30 @@ export default function Settings() {
               onChange={e => set('reminder_message', e.target.value)} />
           </div>
         </div>
+
+        {/* Confirmation mode — Pro only */}
+        {user?.plan === 'pro' && (
+          <div className="card space-y-3">
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Lock size={16} /> Confirmación manual de turnos
+            </h2>
+            <p className="text-sm text-gray-500">
+              Cuando está activado, los turnos nuevos quedan en estado <strong>Pendiente</strong> hasta que vos los confirmás manualmente. Útil si requerís una seña antes de confirmar.
+            </p>
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <div className="relative">
+                <input type="checkbox" className="sr-only"
+                  checked={form.require_confirmation === 'true'}
+                  onChange={e => set('require_confirmation', e.target.checked ? 'true' : 'false')} />
+                <div className={`w-10 h-6 rounded-full transition-colors ${form.require_confirmation === 'true' ? 'bg-orange-500' : 'bg-gray-300'}`} />
+                <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.require_confirmation === 'true' ? 'translate-x-4' : ''}`} />
+              </div>
+              <span className="text-sm font-medium text-gray-700">
+                {form.require_confirmation === 'true' ? 'Activado — los turnos requieren confirmación' : 'Desactivado — los turnos se confirman automáticamente'}
+              </span>
+            </label>
+          </div>
+        )}
 
         <button type="submit" className="btn-primary w-full justify-center py-3" disabled={saving}>
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}

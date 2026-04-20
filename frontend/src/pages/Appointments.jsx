@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Trash2, Send, ChevronLeft, ChevronRight, Loader2, Mail } from 'lucide-react';
+import { Plus, Trash2, Send, ChevronLeft, ChevronRight, Loader2, Mail, Check, X } from 'lucide-react';
 import { api } from '../api';
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
@@ -9,15 +9,65 @@ function formatDisplayDate(d) {
   return new Date(y, m - 1, day).toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-const STATUS_OPTS = ['confirmado', 'pendiente', 'cancelado'];
+const STATUS_CFG = {
+  confirmado: { label: 'Confirmado', bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-200' },
+  pendiente:  { label: 'Pendiente',  bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-200' },
+  cancelado:  { label: 'Cancelado',  bg: 'bg-red-100',    text: 'text-red-600',    border: 'border-red-200'   },
+};
+
+function StatusBadge({ apt, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const cfg = STATUS_CFG[apt.status] || STATUS_CFG.pendiente;
+
+  async function change(s) {
+    setBusy(true);
+    try { await onChange(apt, s); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+        {cfg.label}
+      </span>
+      {apt.status === 'pendiente' && (
+        <button onClick={() => change('confirmado')} disabled={busy}
+          className="text-xs px-2.5 py-0.5 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center gap-1 disabled:opacity-50">
+          {busy ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />} Confirmar
+        </button>
+      )}
+      {apt.status === 'pendiente' && (
+        <button onClick={() => change('cancelado')} disabled={busy}
+          className="text-xs px-2.5 py-0.5 rounded-full border border-red-300 text-red-500 font-medium hover:bg-red-50 transition-colors flex items-center gap-1 disabled:opacity-50">
+          <X size={10} /> Cancelar
+        </button>
+      )}
+      {apt.status === 'confirmado' && (
+        <button onClick={() => change('cancelado')} disabled={busy}
+          className="text-xs px-2.5 py-0.5 rounded-full border border-gray-200 text-gray-400 font-medium hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors disabled:opacity-50">
+          Cancelar
+        </button>
+      )}
+      {apt.status === 'cancelado' && (
+        <button onClick={() => change('confirmado')} disabled={busy}
+          className="text-xs px-2.5 py-0.5 rounded-full border border-green-200 text-green-600 font-medium hover:bg-green-50 transition-colors flex items-center gap-1 disabled:opacity-50">
+          {busy ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />} Reactivar
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function Appointments() {
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]   = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [editApt, setEditApt] = useState(null);
-  const [toast, setToast] = useState(null);
+  const [editApt, setEditApt]   = useState(null);
+  const [toast, setToast]       = useState(null);
+  const [staffList, setStaffList]   = useState([]);
+  const [services, setServices]     = useState([]);
+  const [filterStaff, setFilterStaff]     = useState('');
+  const [filterService, setFilterService] = useState('');
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -32,6 +82,11 @@ export default function Appointments() {
   }, [selectedDate]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    api.getStaff().then(setStaffList).catch(() => {});
+    api.get('/services').then(setServices).catch(() => {});
+  }, []);
 
   function shiftDate(days) {
     const d = new Date(`${selectedDate}T12:00:00`);
@@ -54,8 +109,20 @@ export default function Appointments() {
   async function handleResend(id) {
     const r = await api.resendConfirmation(id);
     if (r.ok) showToast('Confirmación enviada por email ✅');
-    else showToast(r.reason === 'email_not_configured' ? 'Email no configurado' : r.reason === 'no_email' ? 'Este turno no tiene email asociado' : 'Error al enviar', 'error');
+    else showToast(
+      r.reason === 'email_not_configured' ? 'Email no configurado' :
+      r.reason === 'no_email' ? 'Este turno no tiene email' : 'Error al enviar',
+      'error'
+    );
   }
+
+  const filtered = appointments.filter(a => {
+    if (filterStaff   && a.staffId   !== filterStaff)   return false;
+    if (filterService && a.serviceName !== filterService) return false;
+    return true;
+  });
+
+  const uniqueServices = [...new Set(appointments.map(a => a.serviceName).filter(Boolean))];
 
   return (
     <div className="space-y-5">
@@ -92,22 +159,49 @@ export default function Appointments() {
         </button>
       </div>
 
+      {/* Filters */}
+      {(staffList.length > 0 || uniqueServices.length > 0) && (
+        <div className="flex gap-2 flex-wrap">
+          {staffList.length > 0 && (
+            <select className="input w-auto text-sm" value={filterStaff} onChange={e => setFilterStaff(e.target.value)}>
+              <option value="">Todos los profesionales</option>
+              {staffList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          )}
+          {uniqueServices.length > 0 && (
+            <select className="input w-auto text-sm" value={filterService} onChange={e => setFilterService(e.target.value)}>
+              <option value="">Todos los servicios</option>
+              {uniqueServices.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+          {(filterStaff || filterService) && (
+            <button className="btn-secondary text-sm py-1.5" onClick={() => { setFilterStaff(''); setFilterService(''); }}>
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="card">
         {loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="animate-spin text-blue-600" size={28} />
           </div>
-        ) : appointments.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="text-center py-10">
-            <p className="text-gray-400">No hay turnos para esta fecha.</p>
-            <button className="btn-primary mt-4" onClick={() => { setEditApt(null); setShowModal(true); }}>
-              <Plus size={16} /> Agregar turno
-            </button>
+            <p className="text-gray-400">
+              {appointments.length > 0 ? 'No hay turnos para los filtros seleccionados.' : 'No hay turnos para esta fecha.'}
+            </p>
+            {appointments.length === 0 && (
+              <button className="btn-primary mt-4" onClick={() => { setEditApt(null); setShowModal(true); }}>
+                <Plus size={16} /> Agregar turno
+              </button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {appointments.map(apt => (
-              <div key={apt.id} className="py-4 flex items-start justify-between gap-4">
+            {filtered.map(apt => (
+              <div key={apt.id} className={`py-4 flex items-start justify-between gap-4 ${apt.status === 'cancelado' ? 'opacity-60' : ''}`}>
                 <div className="flex items-start gap-3 min-w-0">
                   <span className="text-blue-700 font-bold text-lg w-14 shrink-0">{apt.time}</span>
                   <div className="min-w-0">
@@ -117,20 +211,12 @@ export default function Appointments() {
                     <p className="text-sm text-gray-500">{apt.phone}</p>
                     {apt.email && <p className="text-xs text-gray-400">{apt.email}</p>}
                     {apt.notes && <p className="text-xs text-gray-400 italic mt-0.5">{apt.notes}</p>}
-                    <div className="flex items-center gap-2 mt-2">
-                      <select
-                        value={apt.status}
-                        className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white"
-                        onChange={e => handleStatusChange(apt, e.target.value)}
-                      >
-                        {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      {apt.confirmation_sent ? (
-                        <span className="text-xs text-green-600 flex items-center gap-1">
-                          <Mail size={12} /> Email enviado
-                        </span>
-                      ) : null}
-                    </div>
+                    <StatusBadge apt={apt} onChange={handleStatusChange} />
+                    {apt.confirmation_sent ? (
+                      <span className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                        <Mail size={11} /> Email enviado
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -209,7 +295,6 @@ function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
       .finally(() => setLoadingSlots(false));
   }, [form.date, form.serviceId, form.staffId]);
 
-  // Filter staff by selected service
   const filteredStaff = form.serviceId
     ? staffList.filter(s => s.serviceIds?.includes(form.serviceId))
     : staffList;

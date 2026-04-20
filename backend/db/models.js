@@ -53,6 +53,7 @@ const appointmentSchema = new Schema(
     staffId:           { type: Schema.Types.ObjectId, ref: 'Staff', default: null },
     staffName:         { type: String, default: null },
     status:            { type: String, default: 'confirmado' },
+    cancelToken:       { type: String, default: null, index: true },
     source:            { type: String, default: 'admin' }, // 'admin' | 'web'
     confirmation_sent: { type: Number, default: 0 },
     reminder_sent:     { type: Number, default: 0 },
