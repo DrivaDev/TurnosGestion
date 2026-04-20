@@ -20,7 +20,7 @@ app.use(express.json());
 
 app.use(async (req, res, next) => {
   try { await connectDB(); next(); }
-  catch(e) { res.status(500).json({ error: 'No se pudo conectar a la base de datos', detail: e.message }); }
+  catch { res.status(500).json({ error: 'No se pudo conectar a la base de datos' }); }
 });
 
 // Public (sin auth)
