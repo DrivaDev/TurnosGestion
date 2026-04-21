@@ -10,7 +10,7 @@ import {
 const CUSTOM_PAGES = { 'driva-dev': DrivaDevBooking };
 const BASE = '/api/public';
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DAYS_ES   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DAYS_ES   = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 function toISO(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 function todayISO() { return new Date().toISOString().slice(0,10); }

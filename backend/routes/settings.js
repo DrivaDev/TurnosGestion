@@ -19,7 +19,7 @@ router.put('/', async (req, res) => {
     const allowed = [
       'business_name','business_description','reminder_minutes',
       'confirmation_message','reminder_message',
-      'email_from','email_password',
+      'email_from','email_password','require_confirmation',
     ];
     const updates = {};
     for (const key of allowed) {

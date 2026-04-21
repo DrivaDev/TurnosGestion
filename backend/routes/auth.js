@@ -37,21 +37,26 @@ async function uniqueSlug(base) {
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { businessName, name, email, password } = req.body;
+    const { businessName, name, email, password, plan = 'basic' } = req.body;
     if (!businessName || !name || !email || !password)
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
     if (password.length < 6)
       return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    if (!['basic','pro'].includes(plan))
+      return res.status(400).json({ error: 'Plan inválido' });
 
     if (await User.exists({ email: email.toLowerCase() }))
       return res.status(409).json({ error: 'Ya existe una cuenta con ese email' });
 
-    const slug   = await uniqueSlug(generateSlug(businessName));
-    // First month free for basic plan: set paidUntil to end of current month
-    const freeUntil = new Date();
-    freeUntil.setMonth(freeUntil.getMonth() + 1, 0); // Last day of current month
-    freeUntil.setHours(23, 59, 59);
-    const tenant = await Tenant.create({ name: businessName, slug, paidUntil: freeUntil });
+    const slug = await uniqueSlug(generateSlug(businessName));
+    // Basic plan: first month free. Pro plan: must pay before activation.
+    let paidUntil = null;
+    if (plan === 'basic') {
+      paidUntil = new Date();
+      paidUntil.setMonth(paidUntil.getMonth() + 1, 0);
+      paidUntil.setHours(23, 59, 59);
+    }
+    const tenant = await Tenant.create({ name: businessName, slug, plan, paidUntil });
     const passwordHash = await bcrypt.hash(password, 12);
     const user   = await User.create({ tenantId: tenant._id, name, email, passwordHash, role: 'admin' });
     await initTenantConfig(tenant._id, businessName);

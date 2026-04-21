@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Clock, CheckCircle, XCircle, Plus } from 'lucide-react';
+import { CalendarDays, Clock, CheckCircle, XCircle, Plus, Loader2, Mail, Check, X } from 'lucide-react';
 import { api } from '../api';
 
 function todayISO() { return new Date().toISOString().slice(0, 10); }
@@ -10,11 +10,88 @@ function formatDate(dateStr) {
   return new Date(y, m - 1, d).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-const STATUS_COLORS = {
-  confirmado: 'bg-green-100 text-green-800',
-  pendiente:  'bg-yellow-100 text-yellow-800',
-  cancelado:  'bg-red-100 text-red-800',
+const STATUS_CFG = {
+  confirmado: { label: 'Confirmado', bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-200' },
+  pendiente:  { label: 'Pendiente',  bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-200' },
+  cancelado:  { label: 'Cancelado',  bg: 'bg-red-100',    text: 'text-red-600',    border: 'border-red-200'   },
 };
+
+function StatusBadge({ apt, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const cfg = STATUS_CFG[apt.status] || STATUS_CFG.pendiente;
+
+  async function change(s) {
+    setBusy(true);
+    try { await onChange(apt, s); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+        {cfg.label}
+      </span>
+      {apt.status === 'pendiente' && (
+        <button onClick={() => change('confirmado')} disabled={busy}
+          className="text-xs px-2.5 py-0.5 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center gap-1 disabled:opacity-50">
+          {busy ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />} Confirmar
+        </button>
+      )}
+      {apt.status === 'pendiente' && (
+        <button onClick={() => change('cancelado')} disabled={busy}
+          className="text-xs px-2.5 py-0.5 rounded-full border border-red-300 text-red-500 font-medium hover:bg-red-50 transition-colors flex items-center gap-1 disabled:opacity-50">
+          <X size={10} /> Cancelar
+        </button>
+      )}
+      {apt.status === 'confirmado' && (
+        <button onClick={() => change('cancelado')} disabled={busy}
+          className="text-xs px-2.5 py-0.5 rounded-full border border-gray-200 text-gray-400 font-medium hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors disabled:opacity-50">
+          Cancelar
+        </button>
+      )}
+      {apt.status === 'cancelado' && (
+        <button onClick={() => change('confirmado')} disabled={busy}
+          className="text-xs px-2.5 py-0.5 rounded-full border border-green-200 text-green-600 font-medium hover:bg-green-50 transition-colors flex items-center gap-1 disabled:opacity-50">
+          {busy ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />} Reactivar
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AptRow({ apt, showDate, onChange }) {
+  return (
+    <div className={`py-4 flex items-start gap-3 ${apt.status === 'cancelado' ? 'opacity-60' : ''}`}>
+      <div className="shrink-0 text-center w-14">
+        <span className="text-xl font-bold text-blue-700">{apt.time}</span>
+        {showDate && <p className="text-xs text-stone-400 mt-0.5">{apt.date.slice(5).replace('-', '/')}</p>}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-bold text-gray-900 text-base">{apt.name}</p>
+        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+          {apt.serviceName && <span className="text-sm font-semibold text-orange-600">{apt.serviceName}</span>}
+          {apt.staffName && apt.serviceName && <span className="text-gray-300 text-xs">·</span>}
+          {apt.staffName && <span className="text-sm text-stone-500 font-medium">{apt.staffName}</span>}
+        </div>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <span className="text-xs text-gray-400">{apt.phone}</span>
+          {apt.email && <span className="text-xs text-gray-400">{apt.email}</span>}
+        </div>
+        {apt.notes && <p className="text-xs text-gray-400 italic mt-0.5">{apt.notes}</p>}
+        <StatusBadge apt={apt} onChange={onChange} />
+        {apt.confirmation_sent ? (
+          <span className="text-xs text-green-600 flex items-center gap-1 mt-1">
+            <Mail size={11} /> Email enviado
+          </span>
+        ) : null}
+      </div>
+      {apt.source === 'web' && (
+        <span className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" style={{ background: '#FED7AA', color: '#9A3412' }}>
+          Web
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const [todayApts, setTodayApts] = useState([]);
@@ -23,15 +100,24 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const today = todayISO();
 
-  useEffect(() => {
-    Promise.all([
+  const load = useCallback(() => {
+    return Promise.all([
       api.getAppointments({ date: today }),
       api.getAppointments({ month: today.slice(0, 7) }),
     ]).then(([todayData, monthData]) => {
       setTodayApts(todayData);
       setWeekApts(monthData.filter(a => a.date > today).slice(0, 10));
-    }).finally(() => setLoading(false));
+    });
   }, [today]);
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+  }, [load]);
+
+  async function handleStatusChange(apt, status) {
+    await api.updateAppointment(apt.id, { status });
+    await load();
+  }
 
   const confirmed = todayApts.filter(a => a.status !== 'cancelado').length;
   const cancelled = todayApts.filter(a => a.status === 'cancelado').length;
@@ -69,8 +155,10 @@ export default function Dashboard() {
         {todayApts.length === 0 ? (
           <p className="text-stone-400 text-sm text-center py-6">No hay turnos para hoy.</p>
         ) : (
-          <div className="divide-y" style={{ borderColor: '#FED7AA' }}>
-            {todayApts.map(apt => <AptRow key={apt.id} apt={apt} />)}
+          <div className="divide-y divide-gray-100">
+            {todayApts.map(apt => (
+              <AptRow key={apt.id} apt={apt} onChange={handleStatusChange} />
+            ))}
           </div>
         )}
       </div>
@@ -81,8 +169,10 @@ export default function Dashboard() {
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: '#9A3412' }}>
             <CalendarDays size={18} style={{ color: '#EA580C' }} /> Próximos turnos
           </h2>
-          <div className="divide-y" style={{ borderColor: '#FED7AA' }}>
-            {weekApts.map(apt => <AptRow key={apt.id} apt={apt} showDate />)}
+          <div className="divide-y divide-gray-100">
+            {weekApts.map(apt => (
+              <AptRow key={apt.id} apt={apt} showDate onChange={handleStatusChange} />
+            ))}
           </div>
         </div>
       )}
@@ -99,34 +189,6 @@ function StatCard({ Icon, label, value, bg, iconColor }) {
       <div>
         <p className="text-sm text-stone-500">{label}</p>
         <p className="text-3xl font-bold" style={{ color: '#1C1917' }}>{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function AptRow({ apt, showDate }) {
-  return (
-    <div className="py-3 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-16 text-center">
-          <span className="text-lg font-bold" style={{ color: '#EA580C' }}>{apt.time}</span>
-          {showDate && <p className="text-xs text-stone-400">{apt.date.slice(5).replace('-', '/')}</p>}
-        </div>
-        <div>
-          <p className="font-semibold" style={{ color: '#1C1917' }}>{apt.name}</p>
-          <p className="text-sm text-stone-500">{apt.phone}</p>
-          {apt.notes && <p className="text-xs text-stone-400 italic">{apt.notes}</p>}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        {apt.source === 'web' && (
-          <span className="badge text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: '#FED7AA', color: '#9A3412' }}>
-            Web
-          </span>
-        )}
-        <span className={`badge ${STATUS_COLORS[apt.status] || 'bg-gray-100 text-gray-700'}`}>
-          {apt.status}
-        </span>
       </div>
     </div>
   );

@@ -5,28 +5,15 @@ import { api } from '../api';
 const DAY_KEYS = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
 const DAY_LABELS = { lunes:'Lunes', martes:'Martes', miercoles:'Miércoles', jueves:'Jueves', viernes:'Viernes', sabado:'Sábado', domingo:'Domingo' };
 
-function TimePicker({ value, onChange }) {
-  const [h, m] = (value || '09:00').split(':').map(Number);
-  const ampm = h < 12 ? 'AM' : 'PM';
-  const h12 = h % 12 || 12;
-  function update(nh12, nm, nampm) {
-    let nh = nh12 % 12;
-    if (nampm === 'PM') nh += 12;
-    onChange(`${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`);
-  }
+function TimeInput({ value, onChange }) {
   return (
-    <div className="flex gap-1 items-center">
-      <select className="input py-1 px-2 text-xs w-14" value={h12} onChange={e => update(+e.target.value, m, ampm)}>
-        {[...Array(12)].map((_,i) => <option key={i+1} value={i+1}>{i+1}</option>)}
-      </select>
-      <span className="text-xs">:</span>
-      <select className="input py-1 px-2 text-xs w-14" value={m} onChange={e => update(h12, +e.target.value, ampm)}>
-        {[0,15,30,45].map(v => <option key={v} value={v}>{String(v).padStart(2,'0')}</option>)}
-      </select>
-      <select className="input py-1 px-2 text-xs w-16" value={ampm} onChange={e => update(h12, m, e.target.value)}>
-        <option>AM</option><option>PM</option>
-      </select>
-    </div>
+    <input
+      type="time"
+      value={value || '09:00'}
+      onChange={e => onChange(e.target.value)}
+      className="text-sm border rounded-lg px-2 py-1 focus:outline-none focus:border-orange-400 transition-colors"
+      style={{ borderColor: '#e7e5e4' }}
+    />
   );
 }
 
@@ -213,26 +200,33 @@ function StaffModal({ member, services, onClose, onSave }) {
               <p className="text-xs text-stone-500">Si no configurás un horario propio, se usará el horario general del negocio.</p>
 
               {/* Days */}
-              <div className="space-y-3">
-                {DAY_KEYS.map(key => (
-                  <div key={key}>
-                    <div className="flex items-center gap-3">
+              <div className="space-y-2">
+                {DAY_KEYS.map(key => {
+                  const enabled = schedule[key]?.enabled;
+                  return (
+                    <div key={key} className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors"
+                      style={enabled
+                        ? { background: '#FFF7ED', border: '1px solid #FED7AA' }
+                        : { background: '#f5f5f4', border: '1px solid #e7e5e4' }}>
                       <button type="button" onClick={() => toggleDay(key)}
-                        className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${schedule[key]?.enabled ? 'bg-orange-500' : 'bg-stone-300'}`}>
-                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow ${schedule[key]?.enabled ? 'left-4' : 'left-0.5'}`} />
+                        className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${enabled ? 'bg-orange-500' : 'bg-stone-300'}`}>
+                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${enabled ? 'left-4' : 'left-0.5'}`} />
                       </button>
-                      <span className="text-sm font-semibold w-20 text-stone-700">{DAY_LABELS[key]}</span>
-                      {schedule[key]?.enabled && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <TimePicker value={schedule[key]?.start || '09:00'} onChange={v => setDayTime(key, 'start', v)} />
-                          <span className="text-xs text-stone-400">a</span>
-                          <TimePicker value={schedule[key]?.end || '18:00'} onChange={v => setDayTime(key, 'end', v)} />
+                      <span className={`text-sm font-semibold w-20 shrink-0 ${enabled ? 'text-stone-800' : 'text-stone-400'}`}>
+                        {DAY_LABELS[key]}
+                      </span>
+                      {enabled ? (
+                        <div className="flex items-center gap-2 ml-auto">
+                          <TimeInput value={schedule[key]?.start || '09:00'} onChange={v => setDayTime(key, 'start', v)} />
+                          <span className="text-xs text-stone-400">–</span>
+                          <TimeInput value={schedule[key]?.end || '18:00'} onChange={v => setDayTime(key, 'end', v)} />
                         </div>
+                      ) : (
+                        <span className="text-xs text-stone-400 ml-auto">No trabaja</span>
                       )}
-                      {!schedule[key]?.enabled && <span className="text-xs text-stone-400">No trabaja</span>}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Days off */}
