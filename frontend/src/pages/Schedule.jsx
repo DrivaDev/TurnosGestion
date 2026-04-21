@@ -2,39 +2,14 @@ import { useEffect, useState } from 'react';
 import { Save, Loader2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../api';
 
-function TimePicker({ value, onChange }) {
-  const parts = (value || '09:00').split(':');
-  const h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  const ampm = h < 12 ? 'AM' : 'PM';
-  const h12  = h % 12 || 12;
-
-  function setHour(newH12, newAmpm) {
-    let h24 = newH12 % 12;
-    if (newAmpm === 'PM') h24 += 12;
-    onChange(`${String(h24).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
-  }
-  function setMinute(newM) {
-    onChange(`${String(h).padStart(2,'0')}:${String(newM).padStart(2,'0')}`);
-  }
-  function setAmpm(newAmpm) { setHour(h12, newAmpm); }
-
-  const selectCls = 'border border-stone-200 rounded-lg px-2 py-1.5 text-sm font-medium bg-white text-stone-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-300';
-
+function TimeInput({ value, onChange }) {
   return (
-    <div className="flex items-center gap-1">
-      <select value={h12} onChange={e => setHour(Number(e.target.value), ampm)} className={selectCls}>
-        {Array.from({length:12},(_,i)=>i+1).map(n => <option key={n} value={n}>{String(n).padStart(2,'0')}</option>)}
-      </select>
-      <span className="text-stone-400 font-bold text-sm">:</span>
-      <select value={m} onChange={e => setMinute(Number(e.target.value))} className={selectCls}>
-        {[0,15,30,45].map(n => <option key={n} value={n}>{String(n).padStart(2,'0')}</option>)}
-      </select>
-      <select value={ampm} onChange={e => setAmpm(e.target.value)} className={selectCls}>
-        <option value="AM">AM</option>
-        <option value="PM">PM</option>
-      </select>
-    </div>
+    <input
+      type="time"
+      value={value || '09:00'}
+      onChange={e => onChange(e.target.value)}
+      className="border border-stone-200 rounded-lg px-2 py-1.5 text-sm font-medium bg-white text-stone-700 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
+    />
   );
 }
 
@@ -155,31 +130,21 @@ export default function Schedule() {
           {DAYS.map(({ key, label }) => {
             const d = schedule[key] || { enabled: false, start: '09:00', end: '18:00' };
             return (
-              <div key={key} className={`flex flex-wrap items-center gap-4 p-4 rounded-xl border transition-colors ${
-                d.enabled ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
-              }`}>
-                <label className="flex items-center gap-2 w-32 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={d.enabled || false}
-                    onChange={e => updateDay(key, 'enabled', e.target.checked)}
-                    className="w-4 h-4 accent-blue-600"
-                  />
-                  <span className="font-medium text-sm">{label}</span>
-                </label>
-
-                {d.enabled && (
-                  <>
-                    <div className="flex items-center gap-2 text-sm">
-                      <label className="text-gray-500">Desde</label>
-                      <TimePicker value={d.start || '09:00'} onChange={v => updateDay(key, 'start', v)} />
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <label className="text-gray-500">Hasta</label>
-                      <TimePicker value={d.end || '18:00'} onChange={v => updateDay(key, 'end', v)} />
-                    </div>
-
-                  </>
+              <div key={key} className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors"
+                style={d.enabled ? { borderColor: '#FED7AA', background: '#FFF7ED' } : { borderColor: '#e7e5e4', background: '#f5f5f4' }}>
+                <button type="button" onClick={() => updateDay(key, 'enabled', !d.enabled)}
+                  className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${d.enabled ? 'bg-orange-500' : 'bg-stone-300'}`}>
+                  <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${d.enabled ? 'left-5' : 'left-1'}`} />
+                </button>
+                <span className={`text-sm font-semibold w-24 shrink-0 ${d.enabled ? 'text-stone-800' : 'text-stone-400'}`}>{label}</span>
+                {d.enabled ? (
+                  <div className="flex items-center gap-2 ml-auto flex-wrap">
+                    <TimeInput value={d.start || '09:00'} onChange={v => updateDay(key, 'start', v)} />
+                    <span className="text-xs text-stone-400">–</span>
+                    <TimeInput value={d.end || '18:00'} onChange={v => updateDay(key, 'end', v)} />
+                  </div>
+                ) : (
+                  <span className="text-xs text-stone-400 ml-auto">No disponible</span>
                 )}
               </div>
             );

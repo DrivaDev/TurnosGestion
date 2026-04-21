@@ -201,11 +201,24 @@ export default function Appointments() {
         ) : (
           <div className="divide-y divide-gray-100">
             {filtered.map(apt => (
-              <div key={apt.id} className={`py-4 flex items-start justify-between gap-4 ${apt.status === 'cancelado' ? 'opacity-60' : ''}`}>
+              <div key={apt.id} className={`py-4 ${apt.status === 'cancelado' ? 'opacity-60' : ''}`}>
                 <div className="flex items-start gap-3 min-w-0">
                   <span className="text-blue-700 font-bold text-xl w-14 shrink-0 pt-0.5">{apt.time}</span>
-                  <div className="min-w-0">
-                    <p className="font-bold text-gray-900 text-base">{apt.name}</p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-bold text-gray-900 text-base leading-snug">{apt.name}</p>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button title="Reenviar email" className="p-1.5 rounded-lg border border-stone-200 text-stone-400 hover:text-orange-600 hover:border-orange-300 transition-colors" onClick={() => handleResend(apt.id)}>
+                          <Send size={13} />
+                        </button>
+                        <button className="p-1.5 rounded-lg border border-stone-200 text-stone-400 hover:text-blue-600 hover:border-blue-300 transition-colors" onClick={() => { setEditApt(apt); setShowModal(true); }}>
+                          <span className="text-xs font-semibold px-0.5">Editar</span>
+                        </button>
+                        <button className="p-1.5 rounded-lg border border-stone-200 text-stone-400 hover:text-red-500 hover:border-red-300 transition-colors" onClick={() => handleDelete(apt.id)}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                       {apt.serviceName && <span className="text-sm font-semibold text-orange-600">{apt.serviceName}</span>}
                       {apt.staffName && apt.serviceName && <span className="text-gray-300 text-xs">·</span>}
@@ -213,7 +226,7 @@ export default function Appointments() {
                     </div>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="text-xs text-gray-400">{apt.phone}</span>
-                      {apt.email && <span className="text-xs text-gray-400">{apt.email}</span>}
+                      {apt.email && <span className="text-xs text-gray-400 truncate max-w-[160px]">{apt.email}</span>}
                     </div>
                     {apt.notes && <p className="text-xs text-gray-400 italic mt-0.5">{apt.notes}</p>}
                     <StatusBadge apt={apt} onChange={handleStatusChange} />
@@ -223,27 +236,6 @@ export default function Appointments() {
                       </span>
                     ) : null}
                   </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    className="btn-secondary py-1 px-2 text-xs"
-                    title="Reenviar confirmación por email"
-                    onClick={() => handleResend(apt.id)}
-                  >
-                    <Send size={13} />
-                  </button>
-                  <button
-                    className="btn-secondary py-1 px-2 text-xs"
-                    onClick={() => { setEditApt(apt); setShowModal(true); }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="btn-danger py-1 px-2 text-xs"
-                    onClick={() => handleDelete(apt.id)}
-                  >
-                    <Trash2 size={13} />
-                  </button>
                 </div>
               </div>
             ))}

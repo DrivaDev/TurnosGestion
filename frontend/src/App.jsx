@@ -40,7 +40,7 @@ function ProtectedLayout() {
           </span>
         </div>
       )}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6 pb-24 sm:pb-6">
         <Routes>
           <Route path="/dashboard"    element={<Dashboard />} />
           <Route path="/appointments" element={<Appointments />} />
