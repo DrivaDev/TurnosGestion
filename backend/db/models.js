@@ -47,6 +47,7 @@ const appointmentSchema = new Schema(
     date:              { type: String, required: true },
     time:              { type: String, required: true },
     notes:             { type: String, default: null },
+    serviceId:         { type: Schema.Types.ObjectId, ref: 'Service', default: null },
     serviceName:       { type: String, default: null },
     durationMin:       { type: Number, default: null },
     email:             { type: String, default: null },

@@ -67,24 +67,29 @@ async function removeBlockedDay(tenantId, date) {
   await Config.findByIdAndUpdate(tenantId, { $pull: { blocked_days: date } });
 }
 
+function mapApt(d) { return { ...d, id: d._id.toString(), _id: undefined }; }
+
 async function getAppointments(tenantId, { date, month, status } = {}) {
   const q = { tenantId };
   if (date)   q.date = date;
   if (month)  q.date = { $regex: `^${month}` };
   if (status) q.status = status;
-  return Appointment.find(q).sort({ date: 1, time: 1 }).lean({ virtuals: true });
+  const docs = await Appointment.find(q).sort({ date: 1, time: 1 }).lean();
+  return docs.map(mapApt);
 }
 
 async function getAppointmentByToken(cancelToken) {
-  return Appointment.findOne({ cancelToken }).lean({ virtuals: true });
+  const d = await Appointment.findOne({ cancelToken }).lean();
+  return d ? mapApt(d) : null;
 }
 
 async function getAppointment(tenantId, id) {
-  return Appointment.findOne({ _id: id, tenantId }).lean({ virtuals: true });
+  const d = await Appointment.findOne({ _id: id, tenantId }).lean();
+  return d ? mapApt(d) : null;
 }
 
-async function createAppointment(tenantId, { name, phone, email, date, time, notes, serviceName, durationMin, staffId, staffName, source = 'admin', cancelToken = null, status = 'confirmado' }) {
-  const apt = await Appointment.create({ tenantId, name, phone, email: email || null, date, time, notes, serviceName, durationMin, staffId: staffId || null, staffName: staffName || null, source, cancelToken, status });
+async function createAppointment(tenantId, { name, phone, email, date, time, notes, serviceId, serviceName, durationMin, staffId, staffName, source = 'admin', cancelToken = null, status = 'confirmado' }) {
+  const apt = await Appointment.create({ tenantId, name, phone, email: email || null, date, time, notes, serviceId: serviceId || null, serviceName, durationMin, staffId: staffId || null, staffName: staffName || null, source, cancelToken, status });
   return apt.toJSON();
 }
 

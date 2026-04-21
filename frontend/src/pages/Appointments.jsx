@@ -272,8 +272,8 @@ function AppointmentModal({ initial, defaultDate, onClose, onSaved, onError }) {
     date:      initial?.date      || defaultDate,
     time:      initial?.time      || '',
     notes:     initial?.notes     || '',
-    serviceId: initial?.serviceId || '',
-    staffId:   initial?.staffId   || '',
+    serviceId: initial?.serviceId?.toString() || '',
+    staffId:   initial?.staffId?.toString()   || '',
     sendEmail: true,
   });
   const [services, setServices]   = useState([]);

@@ -114,11 +114,11 @@ router.post('/', async (req, res) => {
     if (!name || !phone || !date || !time)
       return res.status(400).json({ error: 'Faltan campos: name, phone, date, time' });
 
-    let serviceName = null, durationMin = null;
+    let resolvedServiceId = null, serviceName = null, durationMin = null;
     if (serviceId) {
       try {
         const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
-        if (svc) { serviceName = svc.name; durationMin = svc.durationMin; }
+        if (svc) { resolvedServiceId = svc._id; serviceName = svc.name; durationMin = svc.durationMin; }
       } catch (_) {}
     }
 
@@ -133,7 +133,7 @@ router.post('/', async (req, res) => {
     if (await db.isSlotTaken(tid, date, time, null, resolvedStaffId))
       return res.status(409).json({ error: 'El horario ya está ocupado' });
 
-    const apt = await db.createAppointment(tid, { name, phone, email: email || null, date, time, notes, serviceName, durationMin, staffId: resolvedStaffId, staffName });
+    const apt = await db.createAppointment(tid, { name, phone, email: email || null, date, time, notes, serviceId: resolvedServiceId, serviceName, durationMin, staffId: resolvedStaffId, staffName });
     const emailResult = doSend ? await sendConfirmation(tid, apt) : null;
     res.status(201).json({ appointment: apt, email: emailResult });
   } catch (err) { res.status(500).json({ error: err.message }); }

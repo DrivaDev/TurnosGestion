@@ -188,11 +188,11 @@ router.post('/:slug/book', async (req, res) => {
       return res.status(400).json({ error: 'Formato de teléfono inválido. Incluí el código de país. Ej: +5491122334455' });
 
     // Resolve service
-    let serviceName = null, durationMin = null;
+    let resolvedServiceId = null, serviceName = null, durationMin = null;
     if (serviceId && serviceId !== 'undefined') {
       try {
         const svc = await Service.findOne({ _id: serviceId, tenantId: tid, active: true });
-        if (svc) { serviceName = svc.name; durationMin = svc.durationMin; }
+        if (svc) { resolvedServiceId = svc._id; serviceName = svc.name; durationMin = svc.durationMin; }
       } catch (_) {}
     }
 
@@ -221,7 +221,7 @@ router.post('/:slug/book', async (req, res) => {
     const cancelToken = crypto.randomBytes(32).toString('hex');
     const status = requireConf ? 'pendiente' : 'confirmado';
 
-    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, email: email || null, date, time, notes, serviceName, durationMin, staffId: resolvedStaffId, staffName, source: 'web', cancelToken, status });
+    const apt = await db.createAppointment(tid, { name, phone: cleanPhone, email: email || null, date, time, notes, serviceId: resolvedServiceId, serviceName, durationMin, staffId: resolvedStaffId, staffName, source: 'web', cancelToken, status });
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const cancelUrl = `${baseUrl}/cancel/${cancelToken}`;
