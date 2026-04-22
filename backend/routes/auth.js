@@ -56,7 +56,8 @@ router.post('/register', async (req, res) => {
       paidUntil.setMonth(paidUntil.getMonth() + 1, 0);
       paidUntil.setHours(23, 59, 59);
     }
-    const tenant = await Tenant.create({ name: businessName, slug, plan, paidUntil });
+    const approved = plan === 'basic'; // basic is auto-approved (free first month)
+    const tenant = await Tenant.create({ name: businessName, slug, plan, paidUntil, approved });
     const passwordHash = await bcrypt.hash(password, 12);
     const user   = await User.create({ tenantId: tenant._id, name, email, passwordHash, role: 'admin' });
     await initTenantConfig(tenant._id, businessName);

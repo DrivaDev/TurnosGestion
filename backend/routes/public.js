@@ -3,7 +3,7 @@ const router   = express.Router();
 const crypto   = require('crypto');
 const { Tenant, Service, Appointment, Staff } = require('../db/models');
 const db = require('../database');
-const { sendConfirmation } = require('../services/email');
+const { sendConfirmation, sendCancellation } = require('../services/email');
 
 const DAY_KEYS = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
 
@@ -242,7 +242,11 @@ router.post('/cancel/:token', async (req, res) => {
     const apt = await db.getAppointmentByToken(req.params.token);
     if (!apt) return res.status(404).json({ error: 'Enlace inválido o expirado.' });
     if (apt.status === 'cancelado') return res.json({ ok: true, alreadyCancelled: true });
-    await db.updateAppointment(apt.tenantId, apt.id || apt._id?.toString(), { status: 'cancelado' });
+    await db.updateAppointment(apt.tenantId, apt.id, { status: 'cancelado' });
+    const tenant = await Tenant.findById(apt.tenantId).lean();
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const bookingUrl = tenant?.slug ? `${baseUrl}/book/${tenant.slug}` : null;
+    await sendCancellation(apt.tenantId, apt, { bookingUrl });
     res.json({ ok: true, alreadyCancelled: false, name: apt.name, date: apt.date, time: apt.time });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

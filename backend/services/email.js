@@ -209,6 +209,85 @@ async function sendReminders() {
   }
 }
 
+async function sendCancellation(tenantId, apt, { bookingUrl } = {}) {
+  if (!apt.email) return { ok: false, reason: 'no_email' };
+  const businessName = await db.getSetting(tenantId, 'business_name') || 'el negocio';
+
+  const intro = `Tu turno en ${businessName} para el ${formatDate(apt.date)} a las ${apt.time} ha sido cancelado.`;
+
+  const reactivateBtn = bookingUrl ? `
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${bookingUrl}"
+        style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(135deg,#EA580C,#F97316);color:#fff;font-size:14px;font-weight:700;text-decoration:none;">
+        Reservar un nuevo turno
+      </a>
+    </div>
+    <p style="text-align:center;margin-top:12px;font-size:13px;color:#78716c;">
+      ¿Fue un error? Contactá al negocio para reactivar tu turno.
+    </p>` : '';
+
+  const html = buildHtml({
+    businessName,
+    heading: 'Turno cancelado',
+    intro,
+    apt,
+    cancelUrl: null,
+    footerNote: null,
+  }).replace('</table>\n\n          ${cancelBtn}', `</table>${reactivateBtn}`);
+
+  // Rebuild html with reactivate button instead of cancel button
+  const rows = [
+    { icon: '📅', label: 'Fecha',       value: formatDate(apt.date) },
+    { icon: '🕐', label: 'Hora',        value: apt.time },
+    apt.serviceName ? { icon: '✂️', label: 'Servicio',    value: apt.serviceName } : null,
+    apt.staffName   ? { icon: '👤', label: 'Profesional', value: apt.staffName  } : null,
+    { icon: '📋', label: 'Cliente',     value: apt.name  },
+  ].filter(Boolean);
+
+  const detailRows = rows.map(r => `
+    <tr>
+      <td style="padding:8px 12px;color:#78716c;font-size:13px;white-space:nowrap;">${r.icon} ${r.label}</td>
+      <td style="padding:8px 12px;color:#1C1917;font-size:14px;font-weight:600;">${r.value}</td>
+    </tr>`).join('');
+
+  const fullHtml = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#FFF7ED;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF7ED;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        <tr><td style="background:linear-gradient(135deg,#374151,#6b7280);border-radius:16px 16px 0 0;padding:36px 32px;text-align:center;">
+          <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">${businessName}</h1>
+          <p style="margin:6px 0 0;color:rgba(255,255,255,0.7);font-size:13px;">Reservas online</p>
+        </td></tr>
+        <tr><td style="background:#ffffff;padding:36px 32px;">
+          <h2 style="margin:0 0 8px;color:#374151;font-size:20px;font-weight:700;">Turno cancelado ❌</h2>
+          <p style="margin:0 0 24px;color:#57534e;font-size:15px;line-height:1.6;">${intro}</p>
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:24px;">
+            <div style="background:#6b7280;padding:10px 16px;">
+              <span style="color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Turno cancelado</span>
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${detailRows}</table>
+          </div>
+          ${reactivateBtn}
+        </td></tr>
+        <tr><td style="background:#ffffff;padding:0 32px;"><div style="border-top:1px solid #FED7AA;"></div></td></tr>
+        <tr><td style="background:#ffffff;border-radius:0 0 16px 16px;padding:20px 32px 28px;text-align:center;">
+          <p style="margin:0;font-size:12px;color:#a8a29e;">Este email fue enviado automáticamente.</p>
+          <p style="margin:12px 0 0;font-size:12px;color:#d6d3d1;">
+            Gestionado con <a href="https://drivadev.com" style="color:#EA580C;font-weight:700;text-decoration:none;">Turnly</a>
+            · Desarrollado por <a href="https://drivadev.com" style="color:#EA580C;font-weight:700;text-decoration:none;">Driva Dev</a>
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const text = `Turno cancelado\n\n${intro}\n\nFecha: ${formatDate(apt.date)}\nHora: ${apt.time}${bookingUrl ? '\n\nReservar nuevo turno: ' + bookingUrl : ''}`;
+  return sendEmail(tenantId, apt.email, `Turno cancelado — ${businessName}`, text, fullHtml);
+}
+
 async function sendTest(tenantId, email) {
   const businessName = await db.getSetting(tenantId, 'business_name') || 'Mi Local';
   const fakeApt = { name: 'Cliente de prueba', date: new Date().toISOString().slice(0,10), time: '10:00', serviceName: 'Servicio ejemplo', staffName: null, phone: null };
@@ -217,4 +296,4 @@ async function sendTest(tenantId, email) {
   return sendEmail(tenantId, email, `Prueba de email — ${businessName}`, text, html);
 }
 
-module.exports = { sendConfirmation, sendReminders, sendTest };
+module.exports = { sendConfirmation, sendCancellation, sendReminders, sendTest };

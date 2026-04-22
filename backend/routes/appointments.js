@@ -1,7 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../database');
-const { sendConfirmation } = require('../services/email');
+const { sendConfirmation, sendCancellation } = require('../services/email');
 const { Service, Staff, Appointment } = require('../db/models');
 
 function generateSlots(start, end, durationMin) {
@@ -153,9 +153,16 @@ router.put('/:id', async (req, res) => {
     }
     const updated = await db.updateAppointment(tid, req.params.id, { name, phone, email, date, time, notes, status });
     let emailResult = null;
+    const wasCancelled = existing.status !== 'cancelado' && status === 'cancelado';
     if (doSend) {
       await db.updateAppointment(tid, req.params.id, { confirmation_sent: 0 });
       emailResult = await sendConfirmation(tid, await db.getAppointment(tid, req.params.id));
+    } else if (wasCancelled) {
+      const fresh = await db.getAppointment(tid, req.params.id);
+      const tenant = await require('../db/models').Tenant.findById(tid).lean();
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const bookingUrl = tenant?.slug ? `${baseUrl}/book/${tenant.slug}` : null;
+      emailResult = await sendCancellation(tid, fresh, { bookingUrl });
     }
     res.json({ appointment: updated, email: emailResult });
   } catch (err) { res.status(500).json({ error: err.message }); }

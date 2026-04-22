@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../database');
+const { Tenant } = require('../db/models');
 const { sendTest } = require('../services/email');
 
 const SENSITIVE = ['email_password'];
@@ -34,6 +35,9 @@ router.put('/', async (req, res) => {
       updates.reminder_minutes = String(mins);
     }
     await db.updateSettings(req.user.tenantId, updates);
+    if (updates.business_name) {
+      await Tenant.findByIdAndUpdate(req.user.tenantId, { name: updates.business_name });
+    }
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
