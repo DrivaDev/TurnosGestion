@@ -1,11 +1,21 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /admin/login
+Allow: /register
+Allow: /login
+
+# Panel de gestión (privado)
 Disallow: /dashboard
 Disallow: /appointments
 Disallow: /services
+Disallow: /staff
 Disallow: /schedule
 Disallow: /settings
+
+# Panel de administración (privado)
+Disallow: /admin
+Disallow: /admin/login
+
+# Páginas funcionales sin valor SEO
+Disallow: /cancel/
 
 Sitemap: https://turnosgestion.vercel.app/sitemap.xml
