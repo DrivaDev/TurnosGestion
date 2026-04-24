@@ -3,7 +3,7 @@
 
   <!-- Landing principal -->
   <url>
-    <loc>https://turnosgestion.vercel.app/</loc>
+    <loc>https://turnly.com.ar/</loc>
     <lastmod>2026-04-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -11,7 +11,7 @@
 
   <!-- Registro -->
   <url>
-    <loc>https://turnosgestion.vercel.app/register</loc>
+    <loc>https://turnly.com.ar/register</loc>
     <lastmod>2026-04-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -19,7 +19,7 @@
 
   <!-- Login -->
   <url>
-    <loc>https://turnosgestion.vercel.app/login</loc>
+    <loc>https://turnly.com.ar/login</loc>
     <lastmod>2026-04-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

@@ -18,4 +18,4 @@ Disallow: /admin/login
 # Páginas funcionales sin valor SEO
 Disallow: /cancel/
 
-Sitemap: https://turnosgestion.vercel.app/sitemap.xml
+Sitemap: https://turnly.com.ar/sitemap.xml
