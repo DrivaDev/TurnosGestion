@@ -118,7 +118,10 @@ export default function Landing() {
           <span className="font-bold text-white text-base tracking-tight">Turnly</span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/login')} className="landing-nav-link text-sm font-medium px-4 py-2 rounded-xl">
+          <button onClick={() => navigate('/login')} className="text-sm font-medium px-4 py-2 rounded-xl transition-colors" style={{ color: 'rgba(255,255,255,0.6)' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
+          >
             Ingresar
           </button>
           <button
@@ -154,15 +157,19 @@ export default function Landing() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             onClick={() => navigate('/register')}
-            className="btn-primary flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-white text-base"
+            className="flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-white text-base transition-all"
             style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)', boxShadow: '0 8px 30px rgba(234,88,12,0.35)' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(234,88,12,0.5)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(234,88,12,0.35)'; }}
           >
             <ArrowRight size={18} /> Quiero mi sistema
           </button>
           <button
             onClick={() => navigate('/login')}
-            className="btn-ghost px-8 py-4 rounded-2xl font-semibold text-base"
+            className="px-8 py-4 rounded-2xl font-semibold text-base transition-all"
             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.7)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
           >
             Ya tengo cuenta → Ingresar
           </button>
@@ -244,7 +251,10 @@ export default function Landing() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {RUBROS.map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="landing-card rounded-2xl p-5 text-center">
+            <div key={label} className="rounded-2xl p-5 text-center transition-all" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(234,88,12,0.06)'; e.currentTarget.style.border = '1px solid rgba(234,88,12,0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.border = '1px solid rgba(255,255,255,0.07)'; }}
+            >
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 mx-auto" style={{ background: 'rgba(234,88,12,0.12)' }}>
                 <Icon size={22} style={{ color: '#F97316' }} />
               </div>
@@ -263,7 +273,10 @@ export default function Landing() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {FEATURES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="landing-card rounded-2xl p-5">
+            <div key={title} className="rounded-2xl p-5 transition-all group" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(234,88,12,0.06)'; e.currentTarget.style.border = '1px solid rgba(234,88,12,0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.border = '1px solid rgba(255,255,255,0.07)'; }}
+            >
               <div className="w-10 h-10 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(234,88,12,0.12)' }}>
                 <Icon size={20} style={{ color: '#F97316' }} />
               </div>
@@ -378,7 +391,10 @@ export default function Landing() {
               ))}
             </div>
             <button onClick={() => window.location.href = '/register'}
-              className="landing-btn-basic w-full mt-6 py-3.5 rounded-2xl font-bold text-sm">
+              className="w-full mt-6 py-3.5 rounded-2xl font-bold text-sm transition-all"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.13)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}>
               Empezar gratis
             </button>
           </div>
@@ -401,7 +417,10 @@ export default function Landing() {
               ))}
             </div>
             <button onClick={() => window.location.href = '/register'}
-              className="landing-btn-pro w-full mt-6 py-3.5 rounded-2xl font-bold text-sm text-white">
+              className="w-full mt-6 py-3.5 rounded-2xl font-bold text-sm text-white transition-all"
+              style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)', boxShadow: '0 8px 25px rgba(234,88,12,0.3)' }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 12px 35px rgba(234,88,12,0.5)'}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = '0 8px 25px rgba(234,88,12,0.3)'}>
               Empezar gratis
             </button>
           </div>
@@ -442,7 +461,10 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => navigate('/register')}
-              className="landing-cta-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-white text-base"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-white text-base transition-all"
+              style={{ background: 'linear-gradient(135deg,#EA580C,#F97316)', boxShadow: '0 8px 30px rgba(234,88,12,0.4)' }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(234,88,12,0.5)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(234,88,12,0.4)'; }}
             >
               <ArrowRight size={18} /> Crear mi cuenta
             </button>
@@ -450,7 +472,10 @@ export default function Landing() {
               href="https://wa.me/5491139139022?text=Hola!%20Quiero%20saber%20más%20sobre%20Turnly"
               target="_blank"
               rel="noopener noreferrer"
-              className="landing-btn-ghost inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
             >
               <MessageSquare size={18} /> Tengo dudas, escribinos
             </a>
