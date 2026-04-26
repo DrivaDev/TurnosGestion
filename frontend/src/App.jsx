@@ -1,28 +1,34 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Navbar            from './components/Navbar';
-import Login             from './pages/Login';
-import Register          from './pages/Register';
-import BookingPage       from './pages/BookingPage';
-import Dashboard         from './pages/Dashboard';
-import Appointments      from './pages/Appointments';
-import Schedule          from './pages/Schedule';
-import Settings          from './pages/Settings';
-import Services          from './pages/Services';
-import Staff             from './pages/Staff';
-import SuperAdminLogin   from './pages/SuperAdminLogin';
-import SuperAdmin        from './pages/SuperAdmin';
-import Landing           from './pages/Landing';
-import CancelPage        from './pages/CancelPage';
 import { MessageSquare } from 'lucide-react';
 
-function ProtectedLayout() {
-  const { user, loading } = useAuth();
-  if (loading) return (
+const Navbar         = lazy(() => import('./components/Navbar'));
+const Login          = lazy(() => import('./pages/Login'));
+const Register       = lazy(() => import('./pages/Register'));
+const BookingPage    = lazy(() => import('./pages/BookingPage'));
+const Dashboard      = lazy(() => import('./pages/Dashboard'));
+const Appointments   = lazy(() => import('./pages/Appointments'));
+const Schedule       = lazy(() => import('./pages/Schedule'));
+const Settings       = lazy(() => import('./pages/Settings'));
+const Services       = lazy(() => import('./pages/Services'));
+const Staff          = lazy(() => import('./pages/Staff'));
+const SuperAdminLogin = lazy(() => import('./pages/SuperAdminLogin'));
+const SuperAdmin     = lazy(() => import('./pages/SuperAdmin'));
+const Landing        = lazy(() => import('./pages/Landing'));
+const CancelPage     = lazy(() => import('./pages/CancelPage'));
+
+function Spinner() {
+  return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
     </div>
   );
+}
+
+function ProtectedLayout() {
+  const { user, loading } = useAuth();
+  if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace />;
   return (
     <div className="min-h-screen flex flex-col">
@@ -73,16 +79,18 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/"             element={<Landing />} />
-          <Route path="/login"        element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/register"     element={<PublicRoute><Register /></PublicRoute>} />
-          <Route path="/book/:slug"   element={<BookingPage />} />
-          <Route path="/cancel/:token" element={<CancelPage />} />
-          <Route path="/admin/login"  element={<SuperAdminLogin />} />
-          <Route path="/admin"        element={<SuperAdmin />} />
-          <Route path="/*"            element={<ProtectedLayout />} />
-        </Routes>
+        <Suspense fallback={<Spinner />}>
+          <Routes>
+            <Route path="/"              element={<Landing />} />
+            <Route path="/login"         element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/register"      element={<PublicRoute><Register /></PublicRoute>} />
+            <Route path="/book/:slug"    element={<BookingPage />} />
+            <Route path="/cancel/:token" element={<CancelPage />} />
+            <Route path="/admin/login"   element={<SuperAdminLogin />} />
+            <Route path="/admin"         element={<SuperAdmin />} />
+            <Route path="/*"             element={<ProtectedLayout />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );
