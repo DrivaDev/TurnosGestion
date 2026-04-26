@@ -2,14 +2,14 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CalendarDays, MessageSquare, Clock, Zap, Shield, BarChart2,
-  ArrowRight, CheckCircle2, Star,
+  ArrowRight, CheckCircle2, Star, Scissors, Stethoscope, Sparkles,
 } from 'lucide-react';
 
 const FEATURES = [
   {
     icon: CalendarDays,
     title: 'Agenda online 24/7',
-    desc: 'Tus clientes reservan cuando quieren, sin llamadas ni mensajes. La agenda se actualiza sola.',
+    desc: 'Tus clientes sacan turno online cuando quieren, sin llamadas ni mensajes. La agenda se actualiza sola.',
   },
   {
     icon: MessageSquare,
@@ -23,8 +23,8 @@ const FEATURES = [
   },
   {
     icon: BarChart2,
-    title: 'Panel de gestión',
-    desc: 'Ves todos tus turnos del día, confirmás, cancelás y agregás nuevos desde el panel.',
+    title: 'Panel de gestión completo',
+    desc: 'Ves todos tus turnos del día, confirmás, cancelás y agregás nuevos desde el gestor de turnos online.',
   },
   {
     icon: Shield,
@@ -38,16 +38,23 @@ const FEATURES = [
   },
 ];
 
+const RUBROS = [
+  { icon: Scissors, label: 'Peluquerías', desc: 'Turnos online para peluquerías y barberías. Tus clientes eligen horario y profesional sin llamarte.' },
+  { icon: Stethoscope, label: 'Médicos y salud', desc: 'Turnos online para médicos, psicólogos, nutricionistas y cualquier profesional de la salud.' },
+  { icon: Sparkles, label: 'Estéticas y spa', desc: 'Agenda online para estéticas, centros de spa, depilación y tratamientos de belleza.' },
+  { icon: CalendarDays, label: 'Todo tipo de negocio', desc: 'Software de turnos para cualquier negocio de Argentina que atienda clientes con reserva previa.' },
+];
+
 const STEPS = [
   { num: '01', title: 'Contactanos', desc: 'Escribinos por WhatsApp y coordinamos una llamada corta.' },
-  { num: '02', title: 'Configuramos todo', desc: 'Nosotros armamos tu página con tus colores, horarios y datos.' },
-  { num: '03', title: 'Empezás a recibir turnos', desc: 'Compartís el link y tus clientes ya pueden reservar.' },
+  { num: '02', title: 'Configuramos todo', desc: 'Nosotros armamos tu agenda online con tus colores, horarios y datos.' },
+  { num: '03', title: 'Empezás a recibir turnos', desc: 'Compartís el link y tus clientes ya pueden sacar turno online.' },
 ];
 
 const TESTIMONIALS = [
-  { name: 'Peluquería El Corte', text: 'Desde que lo usamos no tenemos que responder más mensajes preguntando horarios. Un antes y un después.', stars: 5 },
-  { name: 'Centro de Estética', text: 'Mis clientes aman poder reservar a cualquier hora. Los recordatorios redujeron los ausentes a casi cero.', stars: 5 },
-  { name: 'Consultorio Nutrición', text: 'La gestión de turnos ahora me lleva 5 minutos por día. Antes era un caos de mensajes de WhatsApp.', stars: 5 },
+  { name: 'Peluquería El Corte', text: 'Desde que usamos este sistema de turnos online no tenemos que responder más mensajes preguntando horarios. Un antes y un después.', stars: 5 },
+  { name: 'Centro de Estética', text: 'Mis clientes aman poder sacar turno online a cualquier hora. Los recordatorios redujeron los ausentes a casi cero.', stars: 5 },
+  { name: 'Consultorio Nutrición', text: 'El gestor de turnos online ahora me lleva 5 minutos por día. Antes era un caos de mensajes de WhatsApp.', stars: 5 },
 ];
 
 const JSON_LD = {
@@ -56,18 +63,28 @@ const JSON_LD = {
   name: 'Turnly',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
-  description: 'Sistema de gestión de turnos online para negocios locales. Página de reservas personalizada, confirmaciones y recordatorios automáticos por email.',
+  description: 'Sistema de turnos online para negocios. Agenda online para peluquerías, médicos, estéticas y más. Gestor de turnos con confirmaciones y recordatorios automáticos por email.',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'ARS', description: 'Consultar precio según plan' },
   author: { '@type': 'Organization', name: 'Driva Dev', url: 'https://drivadev.com' },
-  url: 'https://turnosgestion.vercel.app',
+  url: 'https://turnly.com.ar',
 };
 
 export default function Landing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = 'Turnly — Sistema de turnos online para negocios | Driva Dev';
-    // Inject JSON-LD
+    document.title = 'Turnly — Sistema de turnos online para negocios';
+
+    const setMeta = (name, content, prop = false) => {
+      const sel = prop ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+      let el = document.querySelector(sel);
+      if (!el) { el = document.createElement('meta'); prop ? el.setAttribute('property', name) : el.setAttribute('name', name); document.head.appendChild(el); }
+      el.setAttribute('content', content);
+    };
+    setMeta('description', 'Turnly es el sistema de turnos online para tu negocio. Peluquerías, médicos, estéticas y más. Gestioná tus reservas 24/7 desde cualquier dispositivo.');
+    setMeta('og:title', 'Turnly — Sistema de turnos online para negocios', true);
+    setMeta('og:description', 'Turnly es el sistema de turnos online para tu negocio. Peluquerías, médicos, estéticas y más. Gestioná tus reservas 24/7 desde cualquier dispositivo.', true);
+
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.id   = 'landing-jsonld';
@@ -127,14 +144,14 @@ export default function Landing() {
         </div>
 
         <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight mb-6">
-          Tu negocio toma turnos{' '}
+          El sistema de turnos online{' '}
           <span style={{ background: 'linear-gradient(135deg,#EA580C,#F97316,#FDBA74)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            solo
+            para tu negocio
           </span>
         </h1>
         <p className="text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Página de reservas personalizada, confirmaciones y recordatorios por email,
-          y un panel para gestionar todo. Sin apps, sin complicaciones.
+          Agenda online con reservas 24/7, confirmaciones y recordatorios automáticos por email,
+          y un gestor de turnos completo. Sin apps, sin complicaciones.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -186,7 +203,7 @@ export default function Landing() {
             <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
             <div className="w-3 h-3 rounded-full bg-green-500/50" />
             <div className="flex-1 mx-4 px-3 py-1 rounded-lg text-xs text-center" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)' }}>
-              turnosgestion.vercel.app/book/tu-negocio
+              turnly.com.ar/book/tu-negocio
             </div>
           </div>
           {/* Mini page preview */}
@@ -226,11 +243,33 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Rubros ── */}
+      <section className="relative z-10 max-w-5xl mx-auto px-6 pb-24">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">Turnos online para cada rubro</h2>
+          <p className="text-white/40 text-lg">El software de turnos que se adapta a tu negocio en Argentina.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {RUBROS.map(({ icon: Icon, label, desc }) => (
+            <div key={label} className="rounded-2xl p-5 text-center transition-all" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(234,88,12,0.06)'; e.currentTarget.style.border = '1px solid rgba(234,88,12,0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.border = '1px solid rgba(255,255,255,0.07)'; }}
+            >
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 mx-auto" style={{ background: 'rgba(234,88,12,0.12)' }}>
+                <Icon size={22} style={{ color: '#F97316' }} />
+              </div>
+              <h3 className="font-bold text-white mb-2">{label}</h3>
+              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── Features ── */}
       <section className="relative z-10 max-w-5xl mx-auto px-6 pb-24">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">Todo lo que necesitás</h2>
-          <p className="text-white/40 text-lg">Sin apps extra, sin complicaciones técnicas.</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">Todo lo que necesita tu gestor de turnos</h2>
+          <p className="text-white/40 text-lg">Sin apps extra, sin complicaciones técnicas. Gestioná tus reservas 24/7.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {FEATURES.map(({ icon: Icon, title, desc }) => (
@@ -257,15 +296,15 @@ export default function Landing() {
                 <Zap size={12} /> Diferencial Driva Dev
               </div>
               <h2 className="text-3xl font-extrabold text-white mb-4 leading-tight">
-                Tu página,<br />
+                Tu agenda online,<br />
                 <span style={{ background: 'linear-gradient(135deg,#EA580C,#F97316,#FDBA74)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   100% única
                 </span>
               </h2>
               <p className="text-white/50 leading-relaxed mb-6">
-                No somos un constructor de páginas con plantillas. Nosotros diseñamos y programamos
+                No somos un constructor de páginas con plantillas. Diseñamos y programamos
                 la página de reservas de tu negocio <strong className="text-white/70">desde cero</strong>.
-                Colores, logo, tipografía, secciones, textos — todo como vos lo imaginás.
+                Colores, logo, tipografía, secciones — todo como vos lo imaginás.
               </p>
               <div className="space-y-2">
                 {[
@@ -308,8 +347,8 @@ export default function Landing() {
       {/* ── How it works ── */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-24">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">¿Cómo funciona?</h2>
-          <p className="text-white/40 text-lg">Tres pasos y estás listo.</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">¿Cómo funciona el sistema de turnos?</h2>
+          <p className="text-white/40 text-lg">Tres pasos y tu negocio ya está tomando reservas online.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {STEPS.map(({ num, title, desc }) => (
@@ -371,7 +410,7 @@ export default function Landing() {
             <p className="text-4xl font-extrabold text-white mb-1">$30.000<span className="text-lg font-medium text-white/40">/mes</span></p>
             <p className="text-white/40 text-sm mb-5">Para equipos de hasta 5 profesionales.</p>
             <div className="space-y-2 flex-1">
-              {['Todo lo del Plan Básico','Hasta 5 profesionales/usuarios','Cada uno con su propia agenda','El cliente elige con quién reservar','Sistema apto para reservas con seña','Perfiles editables con foto y servicios'].map(f => (
+              {['Todo lo del Plan Básico','Hasta 5 profesionales/usuarios','Cada uno con su propia agenda online','El cliente elige con quién reservar','Sistema apto para reservas con seña','Perfiles editables con foto y servicios'].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
                   <CheckCircle2 size={14} style={{ color: '#F97316' }} className="shrink-0" /> {f}
                 </div>
@@ -395,7 +434,7 @@ export default function Landing() {
       {/* ── Testimonials ── */}
       <section className="relative z-10 max-w-5xl mx-auto px-6 pb-24">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">Lo que dicen los negocios</h2>
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3">Lo que dicen los negocios que usan Turnly</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {TESTIMONIALS.map(({ name, text, stars }) => (
@@ -415,9 +454,9 @@ export default function Landing() {
       {/* ── CTA ── */}
       <section className="relative z-10 max-w-2xl mx-auto px-6 pb-24 text-center">
         <div className="rounded-3xl p-10" style={{ background: 'rgba(234,88,12,0.08)', border: '1px solid rgba(234,88,12,0.15)' }}>
-          <h2 className="text-3xl font-extrabold mb-3">¿Listo para empezar?</h2>
+          <h2 className="text-3xl font-extrabold mb-3">¿Listo para empezar a tomar turnos online?</h2>
           <p className="mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Escribinos por WhatsApp y en menos de 24hs tu negocio está tomando turnos online.
+            Creá tu cuenta gratis y en menos de 24hs tu negocio está tomando reservas online desde cualquier dispositivo.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
@@ -453,7 +492,7 @@ export default function Landing() {
           <span className="font-bold text-white text-sm">Turnly</span>
         </div>
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
-          Desarrollado por{' '}
+          Sistema de turnos online para negocios · Desarrollado por{' '}
           <a href="https://drivadev.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: '#F97316' }}>
             Driva Dev
           </a>
